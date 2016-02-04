@@ -9,7 +9,6 @@ import com.alorma.github.ui.fragment.preference.GitskariosPreferenceFragment;
 
 public class SettingsActivity extends BackActivity {
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,8 +19,5 @@ public class SettingsActivity extends BackActivity {
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.replace(R.id.content, new GitskariosPreferenceFragment());
         ft.commit();
-
     }
-
-
 }

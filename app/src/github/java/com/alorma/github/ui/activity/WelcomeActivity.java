@@ -3,61 +3,43 @@ package com.alorma.github.ui.activity;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
-import android.animation.Animator;
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
-import butterknife.Bind;
-import butterknife.ButterKnife;
+
+import com.alorma.github.AccountsHelper;
 import com.alorma.github.R;
 import com.alorma.github.account.GithubLoginFragment;
 import com.alorma.github.sdk.bean.dto.response.User;
-import com.alorma.github.sdk.login.AccountsHelper;
 import com.alorma.github.sdk.services.user.GetAuthUserClient;
-import com.alorma.gitskarios.core.client.BaseClient;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.LoginEvent;
+import com.mikepenz.google_material_typeface_library.GoogleMaterial;
+import com.mikepenz.iconics.IconicsDrawable;
 
-public class WelcomeActivity extends AccountAuthenticatorActivity implements BaseClient.OnResultCallback<User>,GithubLoginFragment.LoginCallback {
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import io.fabric.sdk.android.Fabric;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
-    @Bind(R.id.imageView)
-    ImageView imageView;
-
-    @Bind(R.id.imageUser)
-    ImageView imageUser;
+public class WelcomeActivity extends AccountAuthenticatorActivity implements GithubLoginFragment.LoginCallback {
 
     @Bind(R.id.progressBar)
     ProgressBar progressBar;
 
-    @Bind(R.id.appName)
-    TextView appNameTextView;
-
-    @Bind(R.id.buttonGithub)
-    Button buttonGithub;
-
-    @Bind(R.id.buttonOpen)
-    Button buttonOpen;
-
     private GithubLoginFragment loginFragment;
     private String accessToken;
-
-    private Long startTime;
-    private int countClick = 0;
+    private Toolbar secondToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,119 +47,73 @@ public class WelcomeActivity extends AccountAuthenticatorActivity implements Bas
         setContentView(R.layout.activity_welcome);
         ButterKnife.bind(this);
 
+        secondToolbar = (Toolbar) findViewById(R.id.second_toolbar);
+        ViewCompat.setElevation(secondToolbar, R.dimen.gapMedium);
+
+        secondToolbar.setTitle(R.string.app_name);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().addFlags(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         }
-
-        List<Account> accounts = getAccounts(getString(R.string.account_type));
-
-        String action = getIntent().getAction();
-
-        if (action != null && action.equals(Intent.ACTION_MAIN) && accounts.size() > 0) {
-            openMain();
-        } else {
-            showInitialButtons();
-        }
-
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (startTime == null) {
-                    startTime = System.currentTimeMillis();
-                }
-                countClick++;
-
-                if (countClick >= 20  && startTime + TimeUnit.SECONDS.toMillis(5) <= System.currentTimeMillis()) {
-
-                }
-            }
-        });
-
 
         loginFragment = new GithubLoginFragment();
         loginFragment.setLoginCallback(this);
         getFragmentManager().beginTransaction().add(loginFragment, "login").commit();
     }
 
-    @NonNull
-    protected List<Account> getAccounts(String... accountTypes) {
+    private void changeLayouts() {
+        ButterKnife.findById(this, R.id.enterLayout).setVisibility(View.GONE);
+        ButterKnife.findById(this, R.id.loginLayout).setVisibility(View.VISIBLE);
 
-        AccountManager accountManager = AccountManager.get(this);
+        IconicsDrawable back = new IconicsDrawable(this).icon(GoogleMaterial.Icon.gmd_arrow_back)
+                .actionBar()
+                .paddingDp(4)
+                .color(Color.BLACK);
 
-        List<Account> accountList = new ArrayList<>();
+        secondToolbar.setNavigationIcon(back);
 
-        if (accountTypes != null) {
-            for (String accountType : accountTypes) {
-                Account[] accounts = accountManager.getAccountsByType(getString(R.string.account_type));
-                accountList.addAll(Arrays.asList(accounts));
-            }
-        }
-        return accountList;
-    }
-
-    private void showInitialButtons() {
-        imageView.setVisibility(View.VISIBLE);
-        imageUser.setVisibility(View.GONE);
-        progressBar.setVisibility(View.GONE);
-        buttonOpen.setVisibility(View.INVISIBLE);
-        buttonGithub.animate().alpha(1f).setDuration(TimeUnit.SECONDS.toMillis(1)).start();
-        buttonGithub.setVisibility(View.VISIBLE);
-        buttonGithub.setOnClickListener(new View.OnClickListener() {
+        secondToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openCreate();
+                restoreView();
             }
         });
     }
 
-    private void openMain() {
-        MainActivity.startActivity(this);
-        finish();
+    private void restoreView() {
+        ButterKnife.findById(this, R.id.enterLayout).setVisibility(View.VISIBLE);
+        ButterKnife.findById(this, R.id.loginLayout).setVisibility(View.GONE);
+        secondToolbar.setNavigationIcon(null);
+        secondToolbar.setNavigationOnClickListener(null);
     }
 
-    private void openCreate() {
-
-        buttonGithub.animate()
-            .alpha(0f).setDuration(TimeUnit.SECONDS.toMillis(1)).setListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                buttonGithub.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-                }
-            })
-            .start();
-        progressBar.animate().alpha(1f).setStartDelay(300).setDuration(TimeUnit.SECONDS.toMillis(1)).start();
-
+    @OnClick(R.id.openLogin)
+    public void openLogin() {
         progressBar.setVisibility(View.VISIBLE);
-
-        boolean login = loginFragment.login();
-        if (!login) {
-            showInitialButtons();
-        }
+        ButterKnife.findById(this, R.id.accessToken).setVisibility(View.GONE);
+        ButterKnife.findById(this, R.id.generateToken).setVisibility(View.GONE);
+        ButterKnife.findById(this, R.id.loginGithub).setVisibility(View.GONE);
+        loginFragment.login(this);
+        changeLayouts();
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
+    @OnClick(R.id.openLoginAdvanced)
+    public void openLoginAdvanced() {
+        changeLayouts();
+        ButterKnife.findById(this, R.id.accessToken).setVisibility(View.VISIBLE);
+        ButterKnife.findById(this, R.id.generateToken).setVisibility(View.VISIBLE);
+        ButterKnife.findById(this, R.id.loginGithub).setVisibility(View.VISIBLE);
+    }
 
-        if (loginFragment != null) {
-            loginFragment.onNewIntent(intent);
-            loginFragment.setLoginCallback(this);
-        }
+    @OnClick(R.id.generateToken)
+    public void generateTokenGithub() {
+        loginFragment.loginAdvanced(this);
+    }
+
+    @OnClick(R.id.loginGithub)
+    public void loginGithub() {
+        EditText tokenText = ButterKnife.findById(this, R.id.accessToken);
+        endAccess(tokenText.getText().toString());
     }
 
     @Override
@@ -190,48 +126,32 @@ public class WelcomeActivity extends AccountAuthenticatorActivity implements Bas
     @Override
     public void endAccess(String accessToken) {
         this.accessToken = accessToken;
-        GetAuthUserClient authUserClient = new GetAuthUserClient(this, accessToken);
-        authUserClient.setOnResultCallback(this);
-        authUserClient.execute();
-    }
+        progressBar.setVisibility(View.VISIBLE);
 
-    @Override
-    public void onResponseOk(final User user, Response r) {
-        appNameTextView.setText(user.login);
+        if (Fabric.isInitialized()) {
+            EditText tokenText = ButterKnife.findById(this, R.id.accessToken);
+            Answers.getInstance().logLogin(new LoginEvent()
+                    .putMethod(TextUtils.isEmpty(tokenText.getText()) ? "oauth" : "advanced")
+                    .putSuccess(true));
+        }
 
-        imageUser.setVisibility(View.VISIBLE);
-
-        buttonOpen.animate().alpha(1f).setDuration(600).start();
-
-        buttonOpen.setVisibility(View.VISIBLE);
-        buttonOpen.setOnClickListener(new View.OnClickListener() {
+        GetAuthUserClient authUserClient = new GetAuthUserClient(accessToken);
+        authUserClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<User>() {
             @Override
-            public void onClick(View v) {
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                WelcomeActivity.this.onError(e);
+            }
+
+            @Override
+            public void onNext(User user) {
                 addAccount(user);
-                openMain();
-            }
-        });
-
-        ImageLoader.getInstance().loadImage(user.avatar_url, new ImageLoadingListener() {
-            @Override
-            public void onLoadingStarted(String imageUri, View view) {
-
-            }
-
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-
-            }
-
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                imageUser.setImageBitmap(loadedImage);
-                progressBar.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onLoadingCancelled(String imageUri, View view) {
-
+                MainActivity.startActivity(WelcomeActivity.this);
+                finish();
             }
         });
     }
@@ -250,32 +170,27 @@ public class WelcomeActivity extends AccountAuthenticatorActivity implements Bas
         result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
         result.putString(AccountManager.KEY_AUTHTOKEN, accessToken);
         setAccountAuthenticatorResult(result);
-
-        checkAndEnableSyncAdapter(account);
-
         setResult(RESULT_OK);
     }
 
-    private void checkAndEnableSyncAdapter(Account account) {
-        ContentResolver.setIsSyncable(account, getString(R.string.account_type), ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE);
-        if (ContentResolver.getSyncAutomatically(account, getString(R.string.account_type))) {
-            ContentResolver.addPeriodicSync(account, getString(R.string.account_type), Bundle.EMPTY, 1800);
-            ContentResolver.setSyncAutomatically(account, getString(R.string.account_type), true);
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if (loginFragment != null) {
+            loginFragment.onNewIntent(intent);
+            loginFragment.setLoginCallback(this);
         }
     }
 
-    @Override
-    public void onFail(RetrofitError error) {
-
-    }
 
     @Override
-    public void onError(RetrofitError error) {
+    public void onError(Throwable error) {
 
     }
 
     @Override
     public void loginNotAvailable() {
-        showInitialButtons();
+
     }
 }

@@ -11,14 +11,14 @@ import android.view.MenuItem;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.info.RepoInfo;
-import com.alorma.github.sdk.services.search.IssuesSearchClient;
 import com.alorma.github.ui.activity.base.BackActivity;
 import com.alorma.github.ui.fragment.issues.IssuesListFragment;
 
 /**
  * Created by Bernat on 31/01/2015.
  */
-public class SearchIssuesActivity extends BackActivity implements SearchView.OnQueryTextListener, SearchView.OnCloseListener, IssuesListFragment.SearchClientRequest {
+public class SearchIssuesActivity extends BackActivity
+        implements SearchView.OnQueryTextListener, SearchView.OnCloseListener, IssuesListFragment.SearchClientRequest {
 
     private static String REPO_INFO = "REPO_INFO";
 
@@ -35,7 +35,6 @@ public class SearchIssuesActivity extends BackActivity implements SearchView.OnQ
         return intent;
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,7 +43,7 @@ public class SearchIssuesActivity extends BackActivity implements SearchView.OnQ
         setTitle("");
 
         if (getIntent().getExtras() != null) {
-            repoInfo = getIntent().getExtras().getParcelable(REPO_INFO);
+            repoInfo = (RepoInfo) getIntent().getExtras().getParcelable(REPO_INFO);
 
             issuesListFragment = IssuesListFragment.newInstance(repoInfo, true);
             issuesListFragment.setSearchClientRequest(this);
@@ -119,8 +118,6 @@ public class SearchIssuesActivity extends BackActivity implements SearchView.OnQ
         clearSearch();
         return false;
     }
-
-
 
     private void search(String query) {
         if (query == null) {

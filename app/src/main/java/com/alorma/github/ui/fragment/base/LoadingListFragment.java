@@ -14,46 +14,47 @@ import android.view.ViewGroup;
 
 import com.alorma.github.R;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
-import com.alorma.github.ui.utils.DividerItemDecoration;
 import com.alorma.github.utils.AttributesUtils;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import tr.xip.errorview.ErrorView;
 
-/**
- * Created by Bernat on 05/08/2014.
- */
-public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> extends Fragment implements SwipeRefreshLayout.OnRefreshListener
-        , View.OnClickListener, RecyclerArrayAdapter.RecyclerAdapterContentListener, ErrorView.RetryListener {
+public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> extends Fragment
+        implements SwipeRefreshLayout.OnRefreshListener, View.OnClickListener, RecyclerArrayAdapter.RecyclerAdapterContentListener,
+        ErrorView.RetryListener {
 
-    private SwipeRefreshLayout swipe;
+    protected static final String USERNAME = "USERNAME";
     protected FloatingActionButton fab;
     protected RecyclerView recyclerView;
+    protected boolean fromRetry = false;
+    protected boolean refreshing;
+    private SwipeRefreshLayout swipe;
     private ErrorView error_view;
-
     private Adapter adapter;
     private View loadingView;
-    protected boolean fromRetry = false;
     private boolean fromPaginated;
+    private Integer page;
+    private List<RecyclerView.ItemDecoration> listDecorators;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         loadArguments();
-        if (autoStart()) {
-            executeRequest();
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-
         return inflater.inflate(useFAB() ? R.layout.list_fragment_with_fab : R.layout.list_fragment, null, false);
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
     }
 
     @Override
@@ -66,9 +67,6 @@ public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> 
         if (recyclerView != null) {
             recyclerView.setLayoutManager(getLayoutManager());
             recyclerView.setItemAnimator(getItemAnimator());
-            if (getItemDecoration() != null) {
-                recyclerView.addItemDecoration(getItemDecoration());
-            }
         }
 
         error_view = (ErrorView) view.findViewById(R.id.error_view);
@@ -105,13 +103,42 @@ public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> 
 
     protected void addItemDecoration(RecyclerView.ItemDecoration itemDecoration) {
         if (recyclerView != null) {
+            if (listDecorators == null) {
+                listDecorators = new ArrayList<>();
+            }
+            listDecorators.add(itemDecoration);
             recyclerView.removeItemDecoration(itemDecoration);
             recyclerView.addItemDecoration(itemDecoration);
         }
     }
 
-    protected RecyclerView.ItemDecoration getItemDecoration() {
-        return new DividerItemDecoration(getActivity(), DividerItemDecoration.LIST_VERTICAL);
+    public void removeDecorations() {
+        if (recyclerView != null) {
+            if (listDecorators != null) {
+                for (RecyclerView.ItemDecoration listDecorator : listDecorators) {
+                    recyclerView.removeItemDecoration(listDecorator);
+                }
+                listDecorators.clear();
+            }
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        refreshing = true;
+        executeRequest();
+    }
+
+    public void setRefreshing() {
+        this.refreshing = true;
+    }
+
+    @Override
+    public void loadMoreItems() {
+        if (page != null) {
+            executePaginatedRequest(page);
+            page = null;
+        }
     }
 
     protected void executeRequest() {
@@ -139,7 +166,6 @@ public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> 
             loadingView.setVisibility(View.VISIBLE);
         }
     }
-
 
     protected void stopRefresh() {
         if (swipe != null) {
@@ -179,17 +205,20 @@ public abstract class LoadingListFragment<Adapter extends RecyclerArrayAdapter> 
         return false;
     }
 
-    public void setEmpty(boolean withError) {
+    public void setEmpty() {
         stopRefresh();
         if (getActivity() != null) {
             if (error_view != null) {
                 error_view.setVisibility(View.VISIBLE);
                 error_view.setTitle(getNoDataText());
-                error_view.showRetryButton(withError);
-                if (withError) {
-                    error_view.setOnRetryListener(this);
-                }
+                error_view.showRetryButton(true);
+                error_view.setOnRetryListener(this);
             }
+        }
+
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(getLayoutManager());
+            recyclerView.setItemAnimator(getItemAnimator());
         }
     }
 

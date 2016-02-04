@@ -4,26 +4,25 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 
 import com.alorma.github.R;
-import com.alorma.github.sdk.bean.dto.response.Permissions;
 import com.alorma.github.sdk.bean.dto.response.Release;
 import com.alorma.github.sdk.bean.info.RepoInfo;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.sdk.services.repo.GetRepoReleasesClient;
 import com.alorma.github.ui.adapter.ReleasesAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
-import com.alorma.github.ui.fragment.detail.repo.PermissionsManager;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
 import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.List;
 
-import retrofit.RetrofitError;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
-/**
- * Created by a557114 on 29/07/2015.
- */
-public class RepoReleasesFragment extends PaginatedListFragment<List<Release>, ReleasesAdapter>
-        implements TitleProvider {
+public class RepoReleasesFragment extends LoadingListFragment<ReleasesAdapter> implements TitleProvider, Observer<List<Release>> {
 
     private static final String REPO_INFO = "REPO_INFO";
     private static final String REPO_PERMISSIONS = "REPO_PERMISSIONS";
@@ -44,50 +43,69 @@ public class RepoReleasesFragment extends PaginatedListFragment<List<Release>, R
 
     @Override
     protected void loadArguments() {
-        repoInfo = getArguments().getParcelable(REPO_INFO);
+        repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
     }
 
     @Override
     protected void executeRequest() {
         super.executeRequest();
 
-        GetRepoReleasesClient client = new GetRepoReleasesClient(getActivity(), repoInfo, 0);
-        client.setOnResultCallback(this);
-        client.execute();
+        if (getAdapter() != null) {
+            getAdapter().clear();
+        }
+
+        setAction(new GetRepoReleasesClient(repoInfo, 0));
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
 
-        GetRepoReleasesClient client = new GetRepoReleasesClient(getActivity(), repoInfo, page);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new GetRepoReleasesClient(repoInfo, page));
+    }
+
+    private void setAction(GithubListClient<List<Release>> getRepoReleasesClient) {
+        getRepoReleasesClient.observable().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Func1<Pair<List<Release>, Integer>, List<Release>>() {
+                    @Override
+                    public List<Release> call(Pair<List<Release>, Integer> listIntegerPair) {
+                        setPage(listIntegerPair.second);
+                        return listIntegerPair.first;
+                    }
+                })
+                .subscribe(this);
     }
 
     @Override
-    protected void onResponse(List<Release> releases, boolean refreshing) {
+    public void onNext(List<Release> releases) {
         if (releases.size() > 0) {
             hideEmpty();
-            if (getAdapter() != null) {
-                getAdapter().addAll(releases);
-            } else {
+            if (refreshing || getAdapter() == null) {
                 ReleasesAdapter adapter = new ReleasesAdapter(LayoutInflater.from(getActivity()), repoInfo);
                 adapter.addAll(releases);
                 setAdapter(adapter);
+            } else {
+                getAdapter().addAll(releases);
             }
         } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
 
     @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
+    public void onCompleted() {
+        stopRefresh();
+    }
+
+    @Override
+    public void onError(Throwable error) {
+        stopRefresh();
         if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            if (error != null && error.getResponse() != null) {
-                setEmpty(true, error.getResponse().getStatus());
-            }
+            setEmpty();
         }
     }
 

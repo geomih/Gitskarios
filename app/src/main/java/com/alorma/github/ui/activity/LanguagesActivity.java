@@ -4,21 +4,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.widget.CompoundButton;
 
 import com.alorma.github.R;
-import com.alorma.github.sdk.services.languages.GetLanguagesClient;
 import com.alorma.github.ui.activity.base.BackActivity;
 import com.alorma.github.ui.adapter.LanguagesAdapter;
 
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by Bernat on 24/09/2015.
- */
 public class LanguagesActivity extends BackActivity implements LanguagesAdapter.LanguageSelectedListener {
 
     public static final String EXTRA_LANGUAGE = "EXTRA_LANGUAGE";
@@ -53,9 +49,9 @@ public class LanguagesActivity extends BackActivity implements LanguagesAdapter.
     }
 
     private void loadList(boolean showAllLanguages) {
-        GetLanguagesClient client = new GetLanguagesClient(this, showAllLanguages);
-        List<String> strings = client.executeSync();
-        updateAdapter(strings);
+        int languagesRes = showAllLanguages ? R.array.default_languages : R.array.available_languages;
+        String[] languages = getResources().getStringArray(languagesRes);
+        updateAdapter(Arrays.asList(languages));
     }
 
     private void updateAdapter(List<String> strings) {

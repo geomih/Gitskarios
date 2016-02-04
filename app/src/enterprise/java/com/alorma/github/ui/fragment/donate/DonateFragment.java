@@ -2,6 +2,7 @@ package com.alorma.github.ui.fragment.donate;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+
 import com.alorma.github.ui.fragment.base.BaseFragment;
 
 /**

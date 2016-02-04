@@ -57,6 +57,10 @@ public class EmojisAdapter extends RecyclerView.Adapter<EmojisAdapter.EmojiViewH
         this.onEmojiSelectedListener = onEmojiSelectedListener;
     }
 
+    public interface OnEmojiSelectedListener {
+        void onEmojiSelected(Emoji emoji);
+    }
+
     public class EmojiViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private final ImageView icon;
         private final TextView text;
@@ -75,9 +79,5 @@ public class EmojisAdapter extends RecyclerView.Adapter<EmojisAdapter.EmojiViewH
                 onEmojiSelectedListener.onEmojiSelected(emojis.get(getAdapterPosition()));
             }
         }
-    }
-
-    public interface OnEmojiSelectedListener {
-        void onEmojiSelected(Emoji emoji);
     }
 }

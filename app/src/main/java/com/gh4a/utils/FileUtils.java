@@ -1,6 +1,5 @@
 package com.gh4a.utils;
 
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -13,13 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-
 public class FileUtils {
-    private static List<String> imageExts = Arrays.asList(
-            "png", "gif", "jpeg", "jpg", "bmp", "ico"
-    );
-
     private static final String LOG_TAG = "FileUtils";
+    private static List<String> imageExts = Arrays.asList("png", "gif", "jpeg", "jpg", "bmp", "ico");
 
     public static boolean save(File file, InputStream inputStream) {
         OutputStream out = null;
@@ -27,7 +22,6 @@ public class FileUtils {
             out = new FileOutputStream(file);
             int read;
             byte[] bytes = new byte[1024];
-
 
             while ((read = inputStream.read(bytes)) != -1) {
                 out.write(bytes, 0, read);
@@ -51,17 +45,14 @@ public class FileUtils {
         return false;
     }
 
-
     public static String getFileExtension(String filename) {
         int mid = filename.lastIndexOf(".");
         if (mid == -1) {
             return "";
         }
 
-
         return filename.substring(mid + 1, filename.length());
     }
-
 
     public static String getFileName(String path) {
         if (TextUtils.isEmpty(path)) {
@@ -74,7 +65,6 @@ public class FileUtils {
         return path.substring(mid + 1, path.length());
     }
 
-
     public static boolean isImage(String filename) {
         if (TextUtils.isEmpty(filename)) {
             return false;
@@ -83,7 +73,6 @@ public class FileUtils {
         if (TextUtils.isEmpty(ext)) {
             return false;
         }
-
 
         return imageExts.contains(ext.toLowerCase(Locale.US));
     }

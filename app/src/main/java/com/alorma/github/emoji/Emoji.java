@@ -8,12 +8,26 @@ import android.os.Parcelable;
  */
 public class Emoji implements Parcelable {
 
+    public static final Creator<Emoji> CREATOR = new Creator<Emoji>() {
+        public Emoji createFromParcel(Parcel source) {
+            return new Emoji(source);
+        }
+
+        public Emoji[] newArray(int size) {
+            return new Emoji[size];
+        }
+    };
     private String key;
     private String value;
 
     public Emoji(String key, String value) {
         this.key = key;
         this.value = value;
+    }
+
+    protected Emoji(Parcel in) {
+        this.key = in.readString();
+        this.value = in.readString();
     }
 
     public String getKey() {
@@ -32,11 +46,6 @@ public class Emoji implements Parcelable {
         this.value = value;
     }
 
-    protected Emoji(Parcel in) {
-        key = in.readString();
-        value = in.readString();
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -44,20 +53,7 @@ public class Emoji implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(key);
-        dest.writeString(value);
+        dest.writeString(this.key);
+        dest.writeString(this.value);
     }
-
-    @SuppressWarnings("unused")
-    public static final Parcelable.Creator<Emoji> CREATOR = new Parcelable.Creator<Emoji>() {
-        @Override
-        public Emoji createFromParcel(Parcel in) {
-            return new Emoji(in);
-        }
-
-        @Override
-        public Emoji[] newArray(int size) {
-            return new Emoji[size];
-        }
-    };
 }

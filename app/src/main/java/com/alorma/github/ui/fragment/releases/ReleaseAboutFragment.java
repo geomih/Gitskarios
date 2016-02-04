@@ -20,18 +20,19 @@ import com.alorma.github.ui.activity.OrganizationActivity;
 import com.alorma.github.ui.activity.ProfileActivity;
 import com.alorma.github.ui.fragment.base.BaseFragment;
 import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.github.ui.view.UserAvatarView;
+import com.alorma.github.utils.AttributesUtils;
 import com.alorma.github.utils.TimeUtils;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
 import com.github.mobile.util.HttpImageGetter;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by a557114 on 30/07/2015.
@@ -40,12 +41,7 @@ public class ReleaseAboutFragment extends BaseFragment implements TitleProvider 
 
     private static final String RELEASE = "RELEASE";
     private static final String REPO_INFO = "REPO_INFO";
-    private View author;
-    private ImageView profileIcon;
-    private TextView authorName;
     private TextView htmlContentView;
-    private TextView createdAtTextView;
-    private ImageView createdIcon;
     private View progressBar;
 
     public static ReleaseAboutFragment newInstance(Release release, RepoInfo repoInfo) {
@@ -70,12 +66,12 @@ public class ReleaseAboutFragment extends BaseFragment implements TitleProvider 
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        author = view.findViewById(R.id.author);
-        profileIcon = (ImageView) author.findViewById(R.id.profileIcon);
-        authorName = (TextView) author.findViewById(R.id.authorName);
+        View author = view.findViewById(R.id.author);
+        UserAvatarView profileIcon = (UserAvatarView) author.findViewById(R.id.profileIcon);
+        TextView authorName = (TextView) author.findViewById(R.id.authorName);
 
-        createdAtTextView = (TextView) view.findViewById(R.id.createdAt);
-        createdIcon = (ImageView) view.findViewById(R.id.createdIcon);
+        TextView createdAtTextView = (TextView) view.findViewById(R.id.createdAt);
+        ImageView createdIcon = (ImageView) view.findViewById(R.id.createdIcon);
 
         progressBar = view.findViewById(R.id.progressBar);
         htmlContentView = (TextView) view.findViewById(R.id.htmlContentView);
@@ -84,11 +80,14 @@ public class ReleaseAboutFragment extends BaseFragment implements TitleProvider 
 
         if (release != null) {
             User owner = release.author;
-            ImageLoader.getInstance().displayImage(owner.avatar_url, profileIcon);
+            profileIcon.setUser(owner);
             authorName.setText(owner.login);
 
-            createdIcon.setImageDrawable(new IconicsDrawable(getActivity(), Octicons.Icon.oct_clock).colorRes(R.color.primary).actionBar());
-            createdAtTextView.setText(TimeUtils.getDateToText(getActivity(), release.created_at, R.string.created_at));
+            createdIcon.setImageDrawable(new IconicsDrawable(getActivity(), Octicons.Icon.oct_clock)
+                    .color(AttributesUtils.getAccentColor(getActivity())).actionBar());
+            if (release.created_at != null) {
+                createdAtTextView.setText(TimeUtils.getDateToText(getActivity(), release.created_at, R.string.created_at));
+            }
 
             final RepoInfo repoInfo = getArguments().getParcelable(REPO_INFO);
 
@@ -96,10 +95,20 @@ public class ReleaseAboutFragment extends BaseFragment implements TitleProvider 
 
                 RequestMarkdownDTO requestMarkdownDTO = new RequestMarkdownDTO();
                 requestMarkdownDTO.text = release.body;
-                GetMarkdownClient markdownClient = new GetMarkdownClient(getActivity(), requestMarkdownDTO);
-                markdownClient.setOnResultCallback(new BaseClient.OnResultCallback<String>() {
+                GetMarkdownClient markdownClient = new GetMarkdownClient(requestMarkdownDTO);
+                markdownClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<String>() {
                     @Override
-                    public void onResponseOk(String s, Response r) {
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(String s) {
                         String htmlCode = HtmlUtils.format(s).toString();
                         HttpImageGetter imageGetter = new HttpImageGetter(getActivity());
 
@@ -109,13 +118,7 @@ public class ReleaseAboutFragment extends BaseFragment implements TitleProvider 
                         htmlContentView.setMovementMethod(UiUtils.CHECKING_LINK_METHOD);
                         progressBar.setVisibility(View.GONE);
                     }
-
-                    @Override
-                    public void onFail(RetrofitError error) {
-
-                    }
                 });
-                markdownClient.execute();
             }
 
             author.setOnClickListener(new View.OnClickListener() {

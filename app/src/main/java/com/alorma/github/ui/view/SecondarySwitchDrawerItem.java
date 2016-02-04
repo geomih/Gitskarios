@@ -34,6 +34,16 @@ public class SecondarySwitchDrawerItem extends BaseDrawerItem<SecondarySwitchDra
 
     private boolean checked = false;
     private OnCheckedChangeListener onCheckedChangeListener = null;
+    private CompoundButton.OnCheckedChangeListener checkedChangeListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            checked = isChecked;
+
+            if (getOnCheckedChangeListener() != null) {
+                getOnCheckedChangeListener().onCheckedChanged(SecondarySwitchDrawerItem.this, buttonView, isChecked);
+            }
+        }
+    };
 
     public SecondarySwitchDrawerItem withDescription(String description) {
         this.description = new StringHolder(description);
@@ -176,9 +186,6 @@ public class SecondarySwitchDrawerItem extends BaseDrawerItem<SecondarySwitchDra
     /**
      * helper method to decide for the correct color
      * OVERWRITE to get the correct secondary color
-     *
-     * @param ctx
-     * @return
      */
     @Override
     protected int getColor(Context ctx) {
@@ -218,15 +225,4 @@ public class SecondarySwitchDrawerItem extends BaseDrawerItem<SecondarySwitchDra
             this.switchView = (SwitchCompat) view.findViewById(R.id.material_drawer_switch);
         }
     }
-
-    private CompoundButton.OnCheckedChangeListener checkedChangeListener = new CompoundButton.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            checked = isChecked;
-
-            if (getOnCheckedChangeListener() != null) {
-                getOnCheckedChangeListener().onCheckedChanged(SecondarySwitchDrawerItem.this, buttonView, isChecked);
-            }
-        }
-    };
 }

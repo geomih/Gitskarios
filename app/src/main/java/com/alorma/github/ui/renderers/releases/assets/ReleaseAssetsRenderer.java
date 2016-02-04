@@ -18,6 +18,10 @@ import butterknife.ButterKnife;
  */
 public class ReleaseAssetsRenderer extends Renderer<ReleaseAsset> {
 
+    @Bind(R.id.releaseAssetName)
+    TextView releaseAssetName;
+    @Bind(R.id.releaseAssetSize)
+    TextView releaseAssetSize;
     private OnReleaseAssetClicked onReleaseAssetClicked;
 
     @Override
@@ -37,8 +41,6 @@ public class ReleaseAssetsRenderer extends Renderer<ReleaseAsset> {
         });
     }
 
-    @Bind(R.id.releaseAssetName) TextView releaseAssetName;
-    @Bind(R.id.releaseAssetSize) TextView releaseAssetSize;
     @Override
     protected View inflate(LayoutInflater layoutInflater, ViewGroup viewGroup) {
         View inflatedView = layoutInflater.inflate(R.layout.row_repo_release_asset, viewGroup, false);

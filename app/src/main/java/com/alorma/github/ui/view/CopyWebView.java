@@ -84,6 +84,52 @@ public class CopyWebView extends WebView {
     }
 
     /**
+     * a small helper javascrip function to copy the selected text
+     */
+    private void getSelectedData() {
+
+        String js = "(function getSelectedText() {" +
+                "var txt;" +
+                "if (window.getSelection) {" +
+                "txt = window.getSelection().toString();" +
+                "} else if (window.document.getSelection) {" +
+                "txt = window.document.getSelection().toString();" +
+                "} else if (window.document.selection) {" +
+                "txt = window.document.selection.createRange().text;" +
+                "}" +
+                "JSInterface.getText(txt);" +
+                "})()";
+        // calling the js function
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            evaluateJavascript("javascript:" + js, null);
+        } else {
+            loadUrl("javascript:" + js);
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // Send the event to our gesture detector
+        // If it is implemented, there will be a return value
+        if (mDetector != null) {
+            mDetector.onTouchEvent(event);
+        }
+        // If the detected gesture is unimplemented, send it to the superclass
+        return super.onTouchEvent(event);
+    }
+
+    public void setWebViewListener(WebViewListener webViewListener) {
+        mWebViewListener = webViewListener;
+    }
+
+    /**
+     * listener interface
+     */
+    public interface WebViewListener {
+        void onTextCopy(String text);
+    }
+
+    /**
      * A ActionModeCallback
      */
     private class CustomActionModeCallback implements ActionMode.Callback {
@@ -94,8 +140,10 @@ public class CopyWebView extends WebView {
             MenuInflater inflater = mode.getMenuInflater();
             inflater.inflate(R.menu.menu_web_view_copy, menu);
 
-            menu.findItem(R.id.copy).setIcon(new IconicsDrawable(CopyWebView.this.getContext(), GoogleMaterial.Icon.gmd_content_copy).color(Color.WHITE).actionBar());
-            menu.findItem(R.id.share).setIcon(new IconicsDrawable(CopyWebView.this.getContext(), GoogleMaterial.Icon.gmd_share).color(Color.WHITE).actionBar());
+            menu.findItem(R.id.copy)
+                    .setIcon(new IconicsDrawable(CopyWebView.this.getContext(), GoogleMaterial.Icon.gmd_content_copy).color(Color.WHITE).actionBar());
+            menu.findItem(R.id.share)
+                    .setIcon(new IconicsDrawable(CopyWebView.this.getContext(), GoogleMaterial.Icon.gmd_share).color(Color.WHITE).actionBar());
 
             return true;
         }
@@ -136,46 +184,6 @@ public class CopyWebView extends WebView {
     }
 
     /**
-     * a small helper javascrip function to copy the selected text
-     */
-    private void getSelectedData() {
-
-        String js = "(function getSelectedText() {" +
-                "var txt;" +
-                "if (window.getSelection) {" +
-                "txt = window.getSelection().toString();" +
-                "} else if (window.document.getSelection) {" +
-                "txt = window.document.getSelection().toString();" +
-                "} else if (window.document.selection) {" +
-                "txt = window.document.selection.createRange().text;" +
-                "}" +
-                "JSInterface.getText(txt);" +
-                "})()";
-        // calling the js function
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            evaluateJavascript("javascript:" + js, null);
-        } else {
-            loadUrl("javascript:" + js);
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // Send the event to our gesture detector
-        // If it is implemented, there will be a return value
-        if (mDetector != null) {
-            mDetector.onTouchEvent(event);
-        }
-        // If the detected gesture is unimplemented, send it to the superclass
-        return super.onTouchEvent(event);
-    }
-
-
-    public void setWebViewListener(WebViewListener webViewListener) {
-        mWebViewListener = webViewListener;
-    }
-
-    /**
      * a helper interface class to call the WebViewListener.onTextCopy
      */
     public class WebAppInterface {
@@ -185,12 +193,5 @@ public class CopyWebView extends WebView {
                 mWebViewListener.onTextCopy(text);
             }
         }
-    }
-
-    /**
-     * listener interface
-     */
-    public interface WebViewListener {
-        void onTextCopy(String text);
     }
 }

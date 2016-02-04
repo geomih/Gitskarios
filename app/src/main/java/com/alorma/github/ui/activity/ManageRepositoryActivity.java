@@ -16,13 +16,11 @@ import com.alorma.github.ui.fragment.RepositoryManagerFragment;
 /**
  * Created by a557114 on 01/08/2015.
  */
-public class ManageRepositoryActivity extends BackActivity{
-
-    private static final String REPO_INFO = "REPO_INFO";
-    private static final String REQUEST_DTO = "REQUEST_DTO";
+public class ManageRepositoryActivity extends BackActivity {
 
     public static final String CONTENT = "CONTENT";
-
+    private static final String REPO_INFO = "REPO_INFO";
+    private static final String REQUEST_DTO = "REQUEST_DTO";
     private RepositoryManagerFragment repositoryManagerFragment;
 
     public static Intent createIntent(Context context, RepoInfo repoInfo, RepoRequestDTO repoRequestDTO) {
@@ -42,8 +40,8 @@ public class ManageRepositoryActivity extends BackActivity{
         if (getIntent() != null && getIntent().getExtras() != null) {
             if (getIntent().getExtras().containsKey(REPO_INFO) && getIntent().getExtras().containsKey(REQUEST_DTO)) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                RepoInfo repoInfo = getIntent().getExtras().getParcelable(REPO_INFO);
-                RepoRequestDTO dto = getIntent().getExtras().getParcelable(REQUEST_DTO);
+                RepoInfo repoInfo = (RepoInfo) getIntent().getExtras().getParcelable(REPO_INFO);
+                RepoRequestDTO dto = (RepoRequestDTO) getIntent().getExtras().getParcelable(REQUEST_DTO);
                 repositoryManagerFragment = RepositoryManagerFragment.newInstance(repoInfo, dto);
                 ft.replace(R.id.content, repositoryManagerFragment);
                 ft.commit();
@@ -58,7 +56,7 @@ public class ManageRepositoryActivity extends BackActivity{
     @Override
     protected void close(boolean navigateUp) {
         RepoRequestDTO repoRequestDTO = repositoryManagerFragment.getRepoRequestDTO();
-        if (!TextUtils.isEmpty(repoRequestDTO.name))  {
+        if (!TextUtils.isEmpty(repoRequestDTO.name)) {
             Intent data = new Intent();
             data.putExtra(CONTENT, repoRequestDTO);
             setResult(RESULT_OK, data);

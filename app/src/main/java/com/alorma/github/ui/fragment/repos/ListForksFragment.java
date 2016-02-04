@@ -6,6 +6,8 @@ import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Repo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.services.repo.GetForksClient;
+import com.alorma.gitskarios.core.Pair;
+
 import java.util.List;
 
 /**
@@ -33,30 +35,27 @@ public class ListForksFragment extends BaseReposListFragment {
         GetForksClient client;
 
         if (getArguments() != null) {
-            repoInfo = getArguments().getParcelable(REPO_INFO);
+            repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
         }
 
         if (repoInfo != null) {
-            client = new GetForksClient(getActivity(), repoInfo);
+            client = new GetForksClient(repoInfo);
             client.setSort(GetForksClient.STARGAZERS);
-            client.setOnResultCallback(this);
-            client.execute();
+            setAction(client);
         }
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
-        GetForksClient client = new GetForksClient(getActivity(), repoInfo, page);
+        GetForksClient client = new GetForksClient(repoInfo, page);
         client.setSort(GetForksClient.STARGAZERS);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(client);
     }
 
     @Override
-    protected void onResponse(List<Repo> repos, boolean refreshing) {
-        super.onResponse(repos, refreshing);
-
+    public void onNext(Pair<List<Repo>, Integer> listIntegerPair) {
+        super.onNext(listIntegerPair);
         if (getAdapter() != null) {
             getAdapter().showOwnerNameExtra(false);
         }
@@ -70,7 +69,7 @@ public class ListForksFragment extends BaseReposListFragment {
     @Override
     protected void loadArguments() {
         if (getArguments() != null) {
-            repoInfo = getArguments().getParcelable(USERNAME);
+            repoInfo = (RepoInfo) getArguments().getParcelable(USERNAME);
         }
     }
 

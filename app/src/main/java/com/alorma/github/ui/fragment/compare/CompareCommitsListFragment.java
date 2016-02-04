@@ -5,7 +5,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,9 +13,7 @@ import android.widget.Toast;
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Commit;
 import com.alorma.github.sdk.bean.info.CommitInfo;
-import com.alorma.github.sdk.bean.info.IssueInfo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
-import com.alorma.github.sdk.services.pullrequest.GetPullRequestCommits;
 import com.alorma.github.ui.activity.CommitDetailActivity;
 import com.alorma.github.ui.adapter.commit.CommitsAdapter;
 import com.alorma.github.ui.fragment.base.LoadingListFragment;
@@ -93,7 +90,7 @@ public class CompareCommitsListFragment extends LoadingListFragment<CommitsAdapt
 
     @Override
     protected void loadArguments() {
-        repoInfo = getArguments().getParcelable(REPO_INFO);
+        repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
     }
 
     @Override

@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  padding-top: 5px;
+  padding: 8px;
 }
 .CodeMirror {
   height: auto;
@@ -9,4 +9,9 @@ body {
 .CodeMirror-scroll {
   overflow-y: hidden;
   overflow-x: auto;
+}
+pre {
+	color: #222;
+	background-color: #DDD;
+	display: inline-block;
 }

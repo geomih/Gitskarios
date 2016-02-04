@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.text.Html;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,15 +13,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alorma.github.R;
-import com.alorma.gitskarios.core.client.StoreCredentials;
-import com.alorma.github.sdk.Head;
-import com.alorma.github.sdk.PullRequest;
+import com.alorma.github.StoreCredentials;
 import com.alorma.github.sdk.bean.dto.response.GithubStatusResponse;
-import com.alorma.github.sdk.bean.dto.response.Issue;
+import com.alorma.github.sdk.bean.dto.response.Head;
 import com.alorma.github.sdk.bean.dto.response.IssueState;
 import com.alorma.github.sdk.bean.dto.response.Label;
 import com.alorma.github.sdk.bean.dto.response.Milestone;
 import com.alorma.github.sdk.bean.dto.response.Permissions;
+import com.alorma.github.sdk.bean.dto.response.PullRequest;
 import com.alorma.github.sdk.bean.dto.response.Repo;
 import com.alorma.github.sdk.bean.dto.response.User;
 import com.alorma.github.sdk.bean.info.CommitInfo;
@@ -33,6 +33,7 @@ import com.alorma.github.ui.activity.RepoDetailActivity;
 import com.alorma.github.ui.activity.StatusActivity;
 import com.alorma.github.ui.listeners.IssueDetailRequestListener;
 import com.alorma.github.ui.view.LabelView;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.utils.TimeUtils;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
@@ -40,7 +41,6 @@ import com.github.mobile.util.HttpImageGetter;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.wefika.flowlayout.FlowLayout;
 
 /**
@@ -48,12 +48,12 @@ import com.wefika.flowlayout.FlowLayout;
  */
 public class PullRequestDetailView extends LinearLayout {
 
-    private Issue pullRequest;
+    private PullRequest pullRequest;
 
     private TextView title;
     private TextView body;
     private ViewGroup labelsLayout;
-    private ImageView profileIcon;
+    private UserAvatarView profileIcon;
     private TextView profileName;
     private TextView profileEmail;
     private TextView textMilestone;
@@ -69,6 +69,7 @@ public class PullRequestDetailView extends LinearLayout {
 
     private IssueDetailRequestListener issueDetailRequestListener;
     private PullRequestActionsListener pullRequestActionsListener;
+    private TextView textBranch;
 
     public PullRequestDetailView(Context context) {
         super(context);
@@ -98,7 +99,7 @@ public class PullRequestDetailView extends LinearLayout {
         body = (TextView) findViewById(R.id.textBody);
         labelsLayout = (ViewGroup) findViewById(R.id.labelsLayout);
         View authorView = findViewById(R.id.author);
-        profileIcon = (ImageView) authorView.findViewById(R.id.profileIcon);
+        profileIcon = (UserAvatarView) authorView.findViewById(R.id.profileIcon);
         profileName = (TextView) authorView.findViewById(R.id.name);
         profileEmail = (TextView) authorView.findViewById(R.id.email);
         textMilestone = (TextView) findViewById(R.id.textMilestone);
@@ -110,13 +111,12 @@ public class PullRequestDetailView extends LinearLayout {
         description_status = (TextView) findViewById(R.id.description_status);
         textFiles = (TextView) findViewById(R.id.textFiles);
         textRepository = (TextView) findViewById(R.id.textRepository);
+        textBranch = (TextView) findViewById(R.id.textBranch);
         mergeButton = (TextView) findViewById(R.id.mergeButton);
     }
 
-    public void setPullRequest(final RepoInfo repoInfo
-            , final PullRequest pullRequest
-            , GithubStatusResponse statusResponse
-            , Permissions permissions) {
+    public void setPullRequest(final RepoInfo repoInfo, final PullRequest pullRequest, GithubStatusResponse statusResponse,
+                               Permissions permissions) {
         if (this.pullRequest == null) {
             this.pullRequest = pullRequest;
             title.setText(pullRequest.title);
@@ -124,8 +124,9 @@ public class PullRequestDetailView extends LinearLayout {
             if (pullRequest.user != null) {
                 profileName.setText(pullRequest.user.login);
                 profileEmail.setText(TimeUtils.getTimeAgoString(pullRequest.created_at));
-                ImageLoader instance = ImageLoader.getInstance();
-                instance.displayImage(pullRequest.user.avatar_url, profileIcon);
+
+                profileIcon.setUser(pullRequest.user);
+
                 OnClickListener issueUserClick = new OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -253,8 +254,7 @@ public class PullRequestDetailView extends LinearLayout {
                         text = R.string.status_checks_failure;
                     }
 
-                    IconicsDrawable drawable = new IconicsDrawable(icon_status.getContext(), icon)
-                            .colorRes(R.color.white)
+                    IconicsDrawable drawable = new IconicsDrawable(icon_status.getContext(), icon).colorRes(R.color.white)
                             .sizeRes(R.dimen.material_drawer_item_primary)
                             .paddingRes(R.dimen.gapMedium);
                     icon_status.setImageDrawable(drawable);
@@ -262,9 +262,8 @@ public class PullRequestDetailView extends LinearLayout {
                     icon_status.setBackgroundResource(background);
 
                     name_status.setText(text);
-                    description_status.setText(
-                            getContext().getResources().getQuantityString(R.plurals.status_checks_num
-                                    , statusResponse.total_count, statusResponse.total_count));
+                    description_status.setText(getContext().getResources()
+                            .getQuantityString(R.plurals.status_checks_num, statusResponse.total_count, statusResponse.total_count));
 
                     status_ly.setOnClickListener(new OnClickListener() {
                         @Override
@@ -308,7 +307,11 @@ public class PullRequestDetailView extends LinearLayout {
             }
 
             if (mergeButton != null) {
-                if (pullRequest.state == IssueState.closed || pullRequest.merged || permissions == null || !permissions.push || pullRequest.mergeable == null) {
+                if (pullRequest.state == IssueState.closed
+                        || pullRequest.merged
+                        || permissions == null
+                        || !permissions.push
+                        || pullRequest.mergeable == null) {
                     mergeButton.setVisibility(View.GONE);
                 } else if (pullRequest.mergeable) {
                     mergeButton.setVisibility(View.VISIBLE);
@@ -347,6 +350,13 @@ public class PullRequestDetailView extends LinearLayout {
                 title.setOnClickListener(editClickListener);
                 body.setOnClickListener(editClickListener);
             }
+
+            if (pullRequest.base != null && pullRequest.head != null) {
+                textBranch.setCompoundDrawables(getIcon(Octicons.Icon.oct_git_branch), null, null, null);
+                String branches = String.format("<b>[%s]</b> from <b>[%s]</b>", pullRequest.base.label,
+                        pullRequest.head.label);
+                textBranch.setText(Html.fromHtml(branches));
+            }
         }
     }
 
@@ -355,10 +365,12 @@ public class PullRequestDetailView extends LinearLayout {
     }
 
     public int getColorIcons() {
-        if (pullRequest.state == IssueState.open) {
-            return R.color.issue_state_open;
+        if (pullRequest.merged) {
+            return R.color.pullrequest_state_merged;
+        } else if (pullRequest.state == IssueState.open) {
+            return R.color.pullrequest_state_open;
         } else {
-            return R.color.issue_state_close;
+            return R.color.pullrequest_state_close;
         }
     }
 
@@ -366,11 +378,11 @@ public class PullRequestDetailView extends LinearLayout {
         this.pullRequestActionsListener = pullRequestActionsListener;
     }
 
-    public interface PullRequestActionsListener {
-        void mergeRequest(Head head, Head base);
-    }
-
     public void setIssueDetailRequestListener(IssueDetailRequestListener issueDetailRequestListener) {
         this.issueDetailRequestListener = issueDetailRequestListener;
+    }
+
+    public interface PullRequestActionsListener {
+        void mergeRequest(Head head, Head base);
     }
 }

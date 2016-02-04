@@ -18,17 +18,19 @@ import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Commit;
 import com.alorma.github.sdk.bean.info.CommitInfo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.sdk.services.commit.ListCommitsClient;
 import com.alorma.github.sdk.services.repo.GetRepoBranchesClient;
 import com.alorma.github.ui.activity.CommitDetailActivity;
 import com.alorma.github.ui.activity.CompareRepositoryCommitsActivity;
 import com.alorma.github.ui.adapter.commit.CommitsAdapter;
 import com.alorma.github.ui.callbacks.DialogBranchesCallback;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
 import com.alorma.github.ui.fragment.detail.repo.BackManager;
 import com.alorma.github.ui.fragment.detail.repo.BranchManager;
 import com.alorma.github.ui.fragment.detail.repo.PermissionsManager;
 import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
@@ -42,21 +44,22 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.RetrofitError;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 07/09/2014.
  */
-public class CommitsListFragment extends PaginatedListFragment<List<Commit>, CommitsAdapter> implements TitleProvider, BranchManager, PermissionsManager
-        , BackManager, CommitsAdapter.CommitsAdapterListener, MaterialCab.Callback {
+public class CommitsListFragment extends LoadingListFragment<CommitsAdapter>
+        implements TitleProvider, BranchManager, PermissionsManager, BackManager, CommitsAdapter.CommitsAdapterListener, MaterialCab.Callback,
+        Observer<List<Commit>> {
 
     private static final String REPO_INFO = "REPO_INFO";
     private static final String PATH = "PATH";
 
-    private List<Commit> commits;
-
     private RepoInfo repoInfo;
-    private StickyRecyclerHeadersDecoration headersDecoration;
     private String path;
     private boolean isInCompareMode = false;
     private String baseCompare = null;
@@ -85,7 +88,7 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
     @Override
     protected void loadArguments() {
         if (getArguments() != null) {
-            repoInfo = getArguments().getParcelable(REPO_INFO);
+            repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
             path = getArguments().getString(PATH);
         }
     }
@@ -96,9 +99,17 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
         CommitInfo commitInfo = new CommitInfo();
         commitInfo.repoInfo = repoInfo;
         commitInfo.sha = repoInfo.branch;
-        ListCommitsClient client = new ListCommitsClient(getActivity(), commitInfo, path, 0);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new ListCommitsClient(commitInfo, path, 0));
+    }
+
+    private void setAction(final GithubListClient<List<Commit>> listCommitsClient) {
+        listCommitsClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).map(new Func1<Pair<List<Commit>, Integer>, List<Commit>>() {
+            @Override
+            public List<Commit> call(Pair<List<Commit>, Integer> listIntegerPair) {
+                setPage(listIntegerPair.second);
+                return listIntegerPair.first;
+            }
+        }).map(orderCommits()).subscribe(this);
     }
 
     @Override
@@ -106,59 +117,70 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
         super.executePaginatedRequest(page);
         CommitInfo commitInfo = new CommitInfo();
         commitInfo.repoInfo = repoInfo;
-        ListCommitsClient client = new ListCommitsClient(getActivity(), commitInfo, page);
-        client.setOnResultCallback(this);
-        client.execute();
+
+        setAction(new ListCommitsClient(commitInfo, path, page));
     }
 
     @Override
-    protected void onResponse(final List<Commit> commits, boolean refreshing) {
-        if (this.commits == null || refreshing) {
-            this.commits = new ArrayList<>();
+    public void onCompleted() {
+        stopRefresh();
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        stopRefresh();
+        if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+            setEmpty();
         }
-        if (commits != null && commits.size() > 0) {
+    }
 
-            orderCommits(commits);
+    @Override
+    public void onNext(List<Commit> commits) {
+        if (commits.size() > 0) {
+            hideEmpty();
 
-            if (getAdapter() == null) {
+            if (refreshing || getAdapter() == null) {
                 CommitsAdapter commitsAdapter = new CommitsAdapter(LayoutInflater.from(getActivity()), false, repoInfo);
-                commitsAdapter.addAll(CommitsListFragment.this.commits);
+                commitsAdapter.addAll(commits);
                 commitsAdapter.setCommitsAdapterListener(this);
                 setAdapter(commitsAdapter);
             } else {
-
                 getAdapter().addAll(commits);
             }
 
-            if (headersDecoration == null) {
-                headersDecoration = new StickyRecyclerHeadersDecoration(getAdapter());
-                addItemDecoration(headersDecoration);
-            }
+            removeDecorations();
+
+            StickyRecyclerHeadersDecoration headersDecoration =
+                    new StickyRecyclerHeadersDecoration(getAdapter());
+            addItemDecoration(headersDecoration);
+        } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
 
-    private void orderCommits(List<Commit> commits) {
+    private Func1<List<Commit>, List<Commit>> orderCommits() {
+        return new Func1<List<Commit>, List<Commit>>() {
+            @Override
+            public List<Commit> call(List<Commit> commits) {
+                List<Commit> newCommits = new ArrayList<>();
+                for (Commit commit : commits) {
+                    if (commit.commit.author.date != null) {
+                        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                        DateTime dt = formatter.parseDateTime(commit.commit.committer.date);
 
-        for (Commit commit : commits) {
-            if (commit.commit.author.date != null) {
-                DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                DateTime dt = formatter.parseDateTime(commit.commit.committer.date);
+                        Days days = Days.daysBetween(dt.withTimeAtStartOfDay(), new DateTime(System.currentTimeMillis()).withTimeAtStartOfDay());
 
-                Days days = Days.daysBetween(dt.withTimeAtStartOfDay(), new DateTime(System.currentTimeMillis()).withTimeAtStartOfDay());
+                        commit.days = days.getDays();
 
-                commit.days = days.getDays();
-
-                this.commits.add(commit);
+                        newCommits.add(commit);
+                    }
+                }
+                return newCommits;
             }
-        }
-    }
-
-    @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
-        if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(true);
-        }
+        };
     }
 
     @Override
@@ -228,8 +250,7 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
         checkFAB();
         if (getActivity() != null && getActivity() instanceof AppCompatActivity) {
             if (getActivity().findViewById(R.id.cab_stub) != null) {
-                cab = new MaterialCab((AppCompatActivity) getActivity(), R.id.cab_stub)
-                        .setTitle(":base ... :head")
+                cab = new MaterialCab((AppCompatActivity) getActivity(), R.id.cab_stub).setTitle(":base ... :head")
                         .setMenu(R.menu.menu_commits_compare)
                         .start(this);
 
@@ -237,7 +258,8 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
                     MenuItem itemCompare = cab.getMenu().findItem(R.id.action_compare_commits);
 
                     if (itemCompare != null) {
-                        IconicsDrawable iconicsDrawable = new IconicsDrawable(getActivity(), Octicons.Icon.oct_git_compare).actionBar().color(Color.WHITE);
+                        IconicsDrawable iconicsDrawable =
+                                new IconicsDrawable(getActivity(), Octicons.Icon.oct_git_compare).actionBar().color(Color.WHITE);
                         itemCompare.setIcon(iconicsDrawable);
                         itemCompare.setEnabled(false);
                     }
@@ -245,7 +267,8 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
                     MenuItem itemChangeBranch = cab.getMenu().findItem(R.id.action_repo_change_branch);
 
                     if (itemChangeBranch != null) {
-                        IconicsDrawable iconicsDrawable = new IconicsDrawable(getActivity(), Octicons.Icon.oct_git_branch).actionBar().color(Color.WHITE);
+                        IconicsDrawable iconicsDrawable =
+                                new IconicsDrawable(getActivity(), Octicons.Icon.oct_git_branch).actionBar().color(Color.WHITE);
                         itemChangeBranch.setIcon(iconicsDrawable);
                     }
                 }
@@ -255,7 +278,7 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
 
     @Override
     public void setCurrentBranch(String branch) {
-        if (repoInfo != null && !repoInfo.branch.equalsIgnoreCase(branch)) {
+        if (repoInfo != null) {
             repoInfo.branch = branch;
 
             if (getAdapter() != null) {
@@ -301,7 +324,6 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
         return true;
     }
 
-
     public void copy(String text) {
         ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Gitskarios", text);
@@ -331,19 +353,20 @@ public class CommitsListFragment extends PaginatedListFragment<List<Commit>, Com
     }
 
     private void changeBranch() {
-        GetRepoBranchesClient repoBranchesClient = new GetRepoBranchesClient(getActivity(), repoInfo);
-        repoBranchesClient.setOnResultCallback(new DialogBranchesCallback(getActivity(), repoInfo) {
-            @Override
-            protected void onBranchSelected(String branch) {
-                setCurrentBranch(branch);
-            }
+        GetRepoBranchesClient repoBranchesClient = new GetRepoBranchesClient(repoInfo);
+        repoBranchesClient.observable().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DialogBranchesCallback(getActivity(), repoInfo) {
+                    @Override
+                    protected void onBranchSelected(String branch) {
+                        setCurrentBranch(branch);
+                    }
 
-            @Override
-            protected void onNoBranches() {
+                    @Override
+                    protected void onNoBranches() {
 
-            }
-        });
-        repoBranchesClient.execute();
+                    }
+                });
     }
 
     @Override

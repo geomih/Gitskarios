@@ -20,6 +20,7 @@ import android.util.Log;
 
 import com.alorma.github.Base64;
 import com.alorma.github.Base64DecoderException;
+
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;

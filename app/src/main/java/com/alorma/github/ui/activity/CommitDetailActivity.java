@@ -10,7 +10,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 
 import com.alorma.github.R;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.alorma.github.sdk.bean.dto.response.Commit;
 import com.alorma.github.sdk.bean.dto.response.CommitFile;
 import com.alorma.github.sdk.bean.info.CommitInfo;
@@ -25,13 +24,14 @@ import com.alorma.github.ui.fragment.commit.CommitStatusFragment;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 22/12/2014.
  */
-public class CommitDetailActivity extends BackActivity implements CommitFilesAdapter.OnFileRequestListener, BaseClient.OnResultCallback<Commit> {
+public class CommitDetailActivity extends BackActivity implements CommitFilesAdapter.OnFileRequestListener {
 
     private CommitInfo info;
 
@@ -54,7 +54,7 @@ public class CommitDetailActivity extends BackActivity implements CommitFilesAda
         setContentView(R.layout.commit_activity);
 
         if (getIntent().getExtras() != null) {
-            info = getIntent().getExtras().getParcelable(CommitFilesFragment.INFO);
+            info = (CommitInfo) getIntent().getExtras().getParcelable(CommitFilesFragment.INFO);
 
             if (info != null && info.repoInfo != null) {
 
@@ -88,25 +88,29 @@ public class CommitDetailActivity extends BackActivity implements CommitFilesAda
     @Override
     protected void getContent() {
         super.getContent();
-        GetSingleCommitClient client = new GetSingleCommitClient(this, info);
-        client.setOnResultCallback(this);
-        client.execute();
-    }
+        GetSingleCommitClient client = new GetSingleCommitClient(info);
+        client.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<Commit>() {
+            @Override
+            public void onCompleted() {
 
-    @Override
-    public void onResponseOk(Commit commit, Response r) {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setSubtitle(commit.shortSha());
-        }
+            }
 
-        if (commitFilesFragment != null) {
-            commitFilesFragment.setFiles(commit.files);
-        }
-    }
+            @Override
+            public void onError(Throwable e) {
 
-    @Override
-    public void onFail(RetrofitError error) {
+            }
 
+            @Override
+            public void onNext(Commit commit) {
+                if (getSupportActionBar() != null) {
+                    getSupportActionBar().setSubtitle(commit.shortSha());
+                }
+
+                if (commitFilesFragment != null) {
+                    commitFilesFragment.setFiles(commit.files);
+                }
+            }
+        });
     }
 
     @Override
@@ -150,5 +154,4 @@ public class CommitDetailActivity extends BackActivity implements CommitFilesAda
             return "";
         }
     }
-
 }

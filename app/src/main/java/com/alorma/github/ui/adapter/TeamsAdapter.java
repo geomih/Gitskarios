@@ -15,7 +15,6 @@ import java.util.List;
  */
 public class TeamsAdapter extends LazyAdapter<Team> {
 
-
     public TeamsAdapter(Context context, List<Team> users) {
         super(context, 0, users);
     }
@@ -37,5 +36,4 @@ public class TeamsAdapter extends LazyAdapter<Team> {
 
         return v;
     }
-
 }

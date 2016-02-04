@@ -8,9 +8,9 @@
     <include
         android:id="@+id/toolbar"
         layout="@layout/toolbar"
-        android:transitionName="editor"/>
+        android:transitionName="editor" />
 
-    <EditText
+    <com.linkedin.android.spyglass.ui.RichEditorView
         android:id="@+id/edit"
         style="@android:style/Widget.Holo.Light.EditText"
         android:layout_width="match_parent"
@@ -19,16 +19,13 @@
         android:layout_below="@+id/toolbar"
         android:background="@null"
         android:gravity="top"
-        android:textColor="@android:color/black"
-        android:hint="@string/edit_hint"
-        android:padding="@dimen/gapMedium"/>
+        android:padding="@dimen/gapMedium" />
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbarExtra"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/gray_github_light"
         android:minHeight="?actionBarSize"
         app:contentInsetStart="@dimen/second_keyline"
         app:popupTheme="@style/Toolbar.Popup.AppCompat"

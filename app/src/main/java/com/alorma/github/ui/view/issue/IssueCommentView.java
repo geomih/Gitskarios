@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -13,11 +12,11 @@ import com.alorma.github.sdk.bean.dto.response.GithubComment;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.bean.issue.IssueStoryComment;
 import com.alorma.github.sdk.bean.issue.IssueStoryDetail;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.utils.TimeUtils;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
 import com.github.mobile.util.HttpImageGetter;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -28,7 +27,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class IssueCommentView extends LinearLayout {
 
     private TextView body;
-    private ImageView profileIcon;
+    private UserAvatarView profileIcon;
     private TextView userText;
     private TextView createdAt;
 
@@ -59,7 +58,7 @@ public class IssueCommentView extends LinearLayout {
         body = (TextView) findViewById(R.id.textBody);
 
         userText = (TextView) findViewById(R.id.userLogin);
-        profileIcon = (ImageView) findViewById(R.id.profileIcon);
+        profileIcon = (UserAvatarView) findViewById(R.id.profileIcon);
         createdAt = (TextView) findViewById(R.id.createdAt);
     }
 
@@ -69,8 +68,7 @@ public class IssueCommentView extends LinearLayout {
         applyGenericIssueStory(issueStoryDetail);
 
         if (githubComment.user != null) {
-            ImageLoader instance = ImageLoader.getInstance();
-            instance.displayImage(githubComment.user.avatar_url, profileIcon);
+            profileIcon.setUser(githubComment.user);
         }
 
         if (githubComment.body_html != null) {
@@ -84,7 +82,7 @@ public class IssueCommentView extends LinearLayout {
 
     private void applyGenericIssueStory(IssueStoryDetail storyEvent) {
         userText.setText(storyEvent.user().login);
-        ImageLoader.getInstance().displayImage(storyEvent.user().avatar_url, profileIcon);
+        profileIcon.setUser(storyEvent.user());
         setTime(storyEvent.createdAt());
     }
 
@@ -93,5 +91,4 @@ public class IssueCommentView extends LinearLayout {
         String date = TimeUtils.getTimeAgoString(formatter.print(time));
         createdAt.setText(date);
     }
-
 }

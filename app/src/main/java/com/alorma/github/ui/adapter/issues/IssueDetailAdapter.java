@@ -81,7 +81,7 @@ public class IssueDetailAdapter extends RecyclerView.Adapter<IssueDetailAdapter.
                 }
             } else if (viewType == VIEW_COMMENT) {
                 ((CommentHolder) holder).issueCommentView.setComment(repoInfo, (IssueStoryComment) issueStoryDetail);
-            }  else if (viewType == VIEW_EVENT) {
+            } else if (viewType == VIEW_EVENT) {
                 ((TimelineHolder) holder).issueTimelineView.setIssueEvent(((IssueStoryEvent) issueStoryDetail));
             }
         }
@@ -102,7 +102,8 @@ public class IssueDetailAdapter extends RecyclerView.Adapter<IssueDetailAdapter.
 
             if (issueStoryDetail.getType().equals("commented")) {
                 return VIEW_COMMENT;
-            } else if (issueStoryDetail.isList() && (issueStoryDetail.getType().equals("labeled") || issueStoryDetail.getType().equals("unlabeled"))) {
+            } else if (issueStoryDetail.isList() && (issueStoryDetail.getType().equals("labeled") || issueStoryDetail.getType()
+                    .equals("unlabeled"))) {
                 return VIEW_LABELED_LIST;
             }
             return VIEW_EVENT;
@@ -152,6 +153,5 @@ public class IssueDetailAdapter extends RecyclerView.Adapter<IssueDetailAdapter.
             super(itemView);
             text = (TextView) itemView.findViewById(android.R.id.text1);
         }
-
     }
 }

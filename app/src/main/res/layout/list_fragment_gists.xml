@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@id/listContentFL"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/gray_github_light">
+    android:layout_height="match_parent">
 
     <FrameLayout
         android:id="@+id/listContainer"
@@ -29,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="right|bottom"
             android:layout_margin="16dp"
-            app:borderWidth="0dp"/>
+            app:borderWidth="0dp" />
     </FrameLayout>
 
     <RelativeLayout

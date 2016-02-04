@@ -12,7 +12,6 @@ import android.support.v4.view.ViewPager;
 import android.view.View;
 
 import com.alorma.github.R;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.alorma.github.sdk.bean.dto.response.CompareCommit;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.services.repo.CompareCommitsClient;
@@ -23,13 +22,14 @@ import com.alorma.github.ui.fragment.compare.CompareFilesListFragment;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by a557114 on 31/07/2015.
  */
-public class CompareRepositoryCommitsActivity extends BackActivity implements BaseClient.OnResultCallback<CompareCommit> {
+public class CompareRepositoryCommitsActivity extends BackActivity {
 
     private static final String REPO_INFO = "REPO_INFO";
     private static final String BASE = "BASE";
@@ -54,15 +54,34 @@ public class CompareRepositoryCommitsActivity extends BackActivity implements Ba
         setContentView(R.layout.activity_compare_commits);
 
         if (getIntent().getExtras() != null) {
-            RepoInfo repoInfo = getIntent().getExtras().getParcelable(REPO_INFO);
+            RepoInfo repoInfo = (RepoInfo) getIntent().getExtras().getParcelable(REPO_INFO);
             String base = getIntent().getExtras().getString(BASE);
             String head = getIntent().getExtras().getString(HEAD);
 
             setTitle(base + " ... " + head);
 
-            CompareCommitsClient compareCommitsClient = new CompareCommitsClient(this, repoInfo, base, head);
-            compareCommitsClient.setOnResultCallback(this);
-            compareCommitsClient.execute();
+            CompareCommitsClient compareCommitsClient = new CompareCommitsClient(repoInfo, base, head);
+            compareCommitsClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<CompareCommit>() {
+                @Override
+                public void onCompleted() {
+
+                }
+
+                @Override
+                public void onError(Throwable e) {
+
+                }
+
+                @Override
+                public void onNext(CompareCommit compareCommit) {
+                    if (commitsFragment != null) {
+                        commitsFragment.setCommits(compareCommit.commits);
+                    }
+                    if (filesFragment != null) {
+                        filesFragment.setFiles(compareCommit.files);
+                    }
+                }
+            });
 
             final TabLayout tabLayout = (TabLayout) findViewById(R.id.tabStrip);
 
@@ -81,7 +100,8 @@ public class CompareRepositoryCommitsActivity extends BackActivity implements Ba
             } else {
                 tabLayout.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
                     @Override
-                    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight,
+                                               int oldBottom) {
                         tabLayout.setupWithViewPager(viewPager);
 
                         tabLayout.removeOnLayoutChangeListener(this);
@@ -92,22 +112,6 @@ public class CompareRepositoryCommitsActivity extends BackActivity implements Ba
             finish();
         }
     }
-
-    @Override
-    public void onResponseOk(CompareCommit compareCommit, Response r) {
-        if (commitsFragment != null) {
-            commitsFragment.setCommits(compareCommit.commits);
-        }
-        if (filesFragment != null) {
-            filesFragment.setFiles(compareCommit.files);
-        }
-    }
-
-    @Override
-    public void onFail(RetrofitError error) {
-
-    }
-
 
     private class NavigationPagerAdapter extends FragmentPagerAdapter {
 
@@ -139,5 +143,4 @@ public class CompareRepositoryCommitsActivity extends BackActivity implements Ba
             return "";
         }
     }
-
 }

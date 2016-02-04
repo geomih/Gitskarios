@@ -80,7 +80,6 @@ public class OrganizationActivity extends BackActivity {
         }
     }
 
-
     private class NavigationPagerAdapter extends FragmentPagerAdapter {
 
         private List<Fragment> listFragments;

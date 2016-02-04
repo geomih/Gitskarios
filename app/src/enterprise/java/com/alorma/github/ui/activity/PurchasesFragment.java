@@ -6,11 +6,7 @@ import android.content.Intent;
 /**
  * Created by bernat.borras on 24/10/15.
  */
-public class PurchasesFragment extends Fragment{
-
-    public interface PurchasesCallback {
-        void onMultiAccountPurchaseResult(boolean bool);
-    }
+public class PurchasesFragment extends Fragment {
 
     public void checkSku(PurchasesCallback callback) {
         if (callback != null) {
@@ -26,5 +22,9 @@ public class PurchasesFragment extends Fragment{
         if (callback != null) {
             callback.onMultiAccountPurchaseResult(true);
         }
+    }
+
+    public interface PurchasesCallback {
+        void onMultiAccountPurchaseResult(boolean bool);
     }
 }

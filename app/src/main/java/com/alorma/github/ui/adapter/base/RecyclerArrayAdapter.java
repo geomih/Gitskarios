@@ -2,10 +2,6 @@ package com.alorma.github.ui.adapter.base;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Toast;
-
-import com.alorma.github.sdk.bean.dto.response.Notification;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,8 +12,8 @@ import java.util.List;
  */
 public abstract class RecyclerArrayAdapter<ItemType, ViewHolder extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<ViewHolder> {
 
-    private ItemType type;
     public List<ItemType> items;
+    private ItemType type;
     private LayoutInflater inflater;
     private RecyclerAdapterContentListener recyclerAdapterContentListener;
 
@@ -84,7 +80,6 @@ public abstract class RecyclerArrayAdapter<ItemType, ViewHolder extends Recycler
     public void setRecyclerAdapterContentListener(RecyclerAdapterContentListener recyclerAdapterContentListener) {
         this.recyclerAdapterContentListener = recyclerAdapterContentListener;
     }
-
 
     public interface RecyclerAdapterContentListener {
         void loadMoreItems();

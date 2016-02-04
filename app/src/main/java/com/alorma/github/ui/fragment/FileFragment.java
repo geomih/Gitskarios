@@ -4,12 +4,13 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,24 +30,26 @@ import com.alorma.github.sdk.bean.info.FileInfo;
 import com.alorma.github.sdk.services.content.GetFileContentClient;
 import com.alorma.github.sdk.services.content.GetMarkdownClient;
 import com.alorma.github.sdk.services.repo.GetRepoBranchesClient;
-import com.alorma.github.ui.ErrorHandler;
 import com.alorma.github.ui.fragment.base.BaseFragment;
 import com.alorma.github.ui.utils.MarkdownUtils;
 import com.alorma.github.ui.view.CopyWebView;
+import com.alorma.github.utils.AttributesUtils;
 import com.alorma.github.utils.ImageUtils;
-import com.alorma.gitskarios.core.client.BaseClient;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-import dmax.dialog.SpotsDialog;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 20/07/2014.
  */
-public class FileFragment extends BaseFragment implements BaseClient.OnResultCallback<Content> {
+public class FileFragment extends BaseFragment {
 
     public static final String FILE_INFO = "FILE_INFO";
     public static final String FROM_URL = "FROM_URL";
@@ -54,11 +57,10 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
     private CopyWebView webView;
     private ImageView imageView;
     private Content fileContent;
+    private View loadingView;
 
     private FileInfo fileInfo;
     private boolean fromUrl;
-
-    private SpotsDialog progressDialog;
 
     public static FileFragment getInstance(FileInfo info, boolean fromUrl) {
         FileFragment fragment = new FileFragment();
@@ -72,12 +74,14 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.activity_content, null, false);
+        return inflater.inflate(R.layout.file_fragment, null, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        loadingView = view.findViewById(R.id.loading_view);
 
         webView = (CopyWebView) view.findViewById(R.id.webview);
         webView.setWebViewListener(new CopyWebView.WebViewListener() {
@@ -89,11 +93,14 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
                 clipboard.setPrimaryClip(clip);
             }
         });
+
+        webView.setBackgroundColor(AttributesUtils.getWebviewColor(getActivity()));
+
         imageView = (ImageView) view.findViewById(R.id.imageView);
 
         if (getArguments() != null) {
 
-            fileInfo = getArguments().getParcelable(FILE_INFO);
+            fileInfo = (FileInfo) getArguments().getParcelable(FILE_INFO);
             fromUrl = getArguments().getBoolean(FROM_URL);
 
             webView.clearCache(true);
@@ -101,7 +108,6 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
             webView.clearHistory();
             webView.clearMatches();
             webView.clearSslPreferences();
-            webView.setBackgroundColor(getResources().getColor(R.color.gray_github_light));
             webView.setVisibility(View.VISIBLE);
             WebSettings settings = webView.getSettings();
             settings.setBuiltInZoomControls(true);
@@ -117,44 +123,105 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
                     getContent();
                 }
             } else {
-                webView.loadUrl("file:///android_asset/diff.html");
+                SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                String pref_theme = defaultSharedPreferences.getString("pref_theme", getString(R.string.theme_light));
+                if ("theme_dark".equalsIgnoreCase(pref_theme)) {
+                    webView.loadUrl("file:///android_asset/diff_dark.html");
+                } else {
+                    webView.loadUrl("file:///android_asset/diff.html");
+                }
+                loadingView.setVisibility(View.GONE);
             }
         }
     }
 
+    private String configureHtml(String htmlContent) {
+        String fileName = "source_pre.html";
+        SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        String pref_theme = defaultSharedPreferences.getString("pref_theme", getString(R.string.theme_light));
+        if ("theme_dark".equalsIgnoreCase(pref_theme)) {
+            fileName = "source_pre_dark.html";
+        }
+
+        String head = getAssetFileContent(fileName);
+        String end = getAssetFileContent("source_post.html");
+
+        return head + "\n" + htmlContent + "\n" + end;
+    }
+
+    public String getAssetFileContent(String filename) {
+        StringBuilder buf = new StringBuilder();
+        try {
+            InputStream json = getActivity().getAssets().open(filename);
+            BufferedReader in =
+                    new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            String str;
+
+            while ((str = in.readLine()) != null) {
+                buf.append(str);
+            }
+
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return buf.toString();
+    }
+
     private void getBranches() {
         if (fileInfo.repoInfo != null) {
-            showProgressDialog(R.style.SpotDialog_OpeningFile);
+            showProgressDialog();
 
-            GetRepoBranchesClient branchesClient = new GetRepoBranchesClient(getActivity(), fileInfo.repoInfo);
-            branchesClient.setOnResultCallback(new ParseBranchesCallback(fileInfo.path));
-            branchesClient.execute();
+            GetRepoBranchesClient branchesClient = new GetRepoBranchesClient(fileInfo.repoInfo);
+            branchesClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new ParseBranchesCallback(fileInfo.path));
         }
     }
 
     protected void getContent() {
         if (fileInfo.repoInfo != null) {
-            showProgressDialog(R.style.SpotDialog_OpeningFile);
-            GetFileContentClient fileContentClient = new GetFileContentClient(getActivity(), fileInfo);
-            fileContentClient.setOnResultCallback(this);
-            fileContentClient.execute();
+            showProgressDialog();
+            GetFileContentClient fileContentClient = new GetFileContentClient(fileInfo);
+            fileContentClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<Content>() {
+                @Override
+                public void onCompleted() {
+
+                }
+
+                @Override
+                public void onError(Throwable e) {
+
+                }
+
+                @Override
+                public void onNext(Content content) {
+                    onContentLoaded(content);
+                }
+            });
         }
     }
 
-    @Override
-    public void onResponseOk(Content content, Response r) {
+    public void onContentLoaded(Content content) {
         this.fileContent = content;
 
         hideProgressDialog();
 
-
         if (MarkdownUtils.isMarkdown(content.name)) {
             RequestMarkdownDTO request = new RequestMarkdownDTO();
             request.text = decodeContent();
-            GetMarkdownClient markdownClient = new GetMarkdownClient(getActivity(), request);
-            markdownClient.setOnResultCallback(new BaseClient.OnResultCallback<String>() {
+            GetMarkdownClient markdownClient = new GetMarkdownClient(request);
+            markdownClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<String>() {
                 @Override
-                public void onResponseOk(final String s, Response r) {
+                public void onCompleted() {
+
+                }
+
+                @Override
+                public void onError(Throwable e) {
+
+                }
+
+                @Override
+                public void onNext(String s) {
                     if (getActivity() != null && isAdded()) {
                         webView.clearCache(true);
                         webView.clearFormData();
@@ -162,17 +229,10 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
                         webView.clearMatches();
                         webView.clearSslPreferences();
                         webView.getSettings().setUseWideViewPort(false);
-                        webView.setBackgroundColor(getResources().getColor(R.color.gray_github_light));
-                        webView.loadDataWithBaseURL("http://github.com", s, "text/html; charset=UTF-8", null, null);
+                        webView.loadDataWithBaseURL("http://github.com", configureHtml(s), "text/html; charset=UTF-8", null, null);
                     }
                 }
-
-                @Override
-                public void onFail(RetrofitError error) {
-                    ErrorHandler.onError(getActivity(), "FileActivity", error);
-                }
             });
-            markdownClient.execute();
         } else if (ImageUtils.isImage(content.name)) {
             if (getActivity() != null && isAdded()) {
                 try {
@@ -197,7 +257,14 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
             }
         } else {
             if (getActivity() != null && isAdded()) {
-                webView.loadUrl("file:///android_asset/source.html");
+                SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                String pref_theme = defaultSharedPreferences.getString("pref_theme", getString(R.string.theme_light));
+
+                if ("theme_dark".equalsIgnoreCase(pref_theme)) {
+                    webView.loadUrl("file:///android_asset/source_dark.html");
+                } else {
+                    webView.loadUrl("file:///android_asset/source.html");
+                }
             }
         }
     }
@@ -214,6 +281,14 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
         } else {
             return fileInfo.content;
         }
+    }
+
+    protected void showProgressDialog() {
+        loadingView.setVisibility(View.VISIBLE);
+    }
+
+    protected void hideProgressDialog() {
+        loadingView.setVisibility(View.GONE);
     }
 
     protected class JavaScriptInterface {
@@ -236,40 +311,9 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
         public int getLineHighlight() {
             return 0;
         }
-
     }
 
-    @Override
-    public void onFail(RetrofitError error) {
-        ErrorHandler.onError(getActivity(), "FileActivity", error);
-        try {
-            getActivity().finish();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected void showProgressDialog(@StyleRes int style) {
-        if (progressDialog == null) {
-            try {
-                progressDialog = new SpotsDialog(getActivity(), style);
-                progressDialog.setCancelable(false);
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.show();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    protected void hideProgressDialog() {
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-            progressDialog = null;
-        }
-    }
-
-    private class ParseBranchesCallback implements BaseClient.OnResultCallback<List<Branch>> {
+    private class ParseBranchesCallback extends Subscriber<List<Branch>> {
         private String path;
 
         public ParseBranchesCallback(String path) {
@@ -277,7 +321,17 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
         }
 
         @Override
-        public void onResponseOk(List<Branch> branches, Response r) {
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onNext(List<Branch> branches) {
             for (Branch branch : branches) {
                 if (path != null && path.contains(branch.name)) {
                     fileInfo.repoInfo.branch = branch.name;
@@ -287,11 +341,6 @@ public class FileFragment extends BaseFragment implements BaseClient.OnResultCal
                     break;
                 }
             }
-        }
-
-        @Override
-        public void onFail(RetrofitError error) {
-
         }
     }
 }

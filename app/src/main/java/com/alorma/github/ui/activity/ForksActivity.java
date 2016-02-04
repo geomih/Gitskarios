@@ -29,7 +29,7 @@ public class ForksActivity extends BackActivity {
         setContentView(R.layout.generic_toolbar);
 
         if (getIntent() != null && getIntent().getExtras() != null) {
-            RepoInfo info = getIntent().getParcelableExtra(REPO_INFO);
+            RepoInfo info = (RepoInfo) getIntent().getParcelableExtra(REPO_INFO);
 
             setTitle(getString(R.string.forks_screen_title, info.toString()));
 

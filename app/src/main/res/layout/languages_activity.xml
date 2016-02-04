@@ -12,13 +12,13 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimaryDark"
         android:checked="false"
+        android:paddingBottom="@dimen/gapMedium"
+        android:paddingLeft="56dp"
+        android:paddingRight="@dimen/gapMedium"
+        android:paddingTop="@dimen/gapMedium"
         android:text="@string/gist_file_editor_all_languages"
         android:textColor="@color/white"
-        android:textSize="@dimen/textSizeMedium"
-        android:paddingLeft="56dp"
-        android:paddingTop="@dimen/gapMedium"
-        android:paddingRight="@dimen/gapMedium"
-        android:paddingBottom="@dimen/gapMedium" />
+        android:textSize="@dimen/textSizeMedium" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler"

@@ -11,35 +11,39 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import com.alorma.github.R;
-import com.alorma.github.sdk.PullRequest;
 import com.alorma.github.sdk.bean.dto.response.Issue;
 import com.alorma.github.sdk.bean.dto.response.IssueState;
 import com.alorma.github.sdk.bean.dto.response.Permissions;
+import com.alorma.github.sdk.bean.dto.response.PullRequest;
 import com.alorma.github.sdk.bean.info.IssueInfo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.sdk.services.pullrequest.GetPullsClient;
 import com.alorma.github.ui.activity.NewIssueActivity;
 import com.alorma.github.ui.activity.PullRequestDetailActivity;
 import com.alorma.github.ui.adapter.issues.IssuesAdapter;
 import com.alorma.github.ui.adapter.issues.PullRequestsAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
 import com.alorma.github.ui.fragment.detail.repo.BackManager;
 import com.alorma.github.ui.fragment.detail.repo.PermissionsManager;
 import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 22/08/2014.
  */
-public class PullRequestsListFragment extends PaginatedListFragment<List<PullRequest>, PullRequestsAdapter> implements
-        View.OnClickListener, TitleProvider, PermissionsManager,
-        BackManager, IssuesAdapter.IssuesAdapterListener {
+public class PullRequestsListFragment extends LoadingListFragment<PullRequestsAdapter>
+        implements View.OnClickListener, TitleProvider, PermissionsManager, BackManager, IssuesAdapter.IssuesAdapterListener,
+        Observer<List<PullRequest>> {
 
     private static final String REPO_INFO = "REPO_INFO";
     private static final String FROM_SEARCH = "FROM_SEARCH";
@@ -79,6 +83,7 @@ public class PullRequestsListFragment extends PaginatedListFragment<List<PullReq
                 if (currentFilter != position) {
                     currentFilter = position;
 
+                    clear();
                     onRefresh();
                 }
             }
@@ -93,7 +98,7 @@ public class PullRequestsListFragment extends PaginatedListFragment<List<PullReq
     @Override
     protected void loadArguments() {
         if (getArguments() != null) {
-            repoInfo = getArguments().getParcelable(REPO_INFO);
+            repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
         }
     }
 
@@ -101,17 +106,26 @@ public class PullRequestsListFragment extends PaginatedListFragment<List<PullReq
         super.executeRequest();
         if (repoInfo != null) {
             if (currentFilter == 0 || currentFilter == 1) {
-                IssueInfo issueInfo = new IssueInfo(repoInfo);
+                IssueInfo issueInfo = new IssueInfo();
+                issueInfo.repoInfo = repoInfo;
                 if (currentFilter == 0) {
                     issueInfo.state = IssueState.open;
                 } else if (currentFilter == 1) {
                     issueInfo.state = IssueState.closed;
                 }
-                GetPullsClient issuesClient = new GetPullsClient(getActivity(), issueInfo);
-                issuesClient.setOnResultCallback(this);
-                issuesClient.execute();
+                setAction(new GetPullsClient(issueInfo));
             }
         }
+    }
+
+    private void setAction(GithubListClient<List<PullRequest>> client) {
+        client.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).map(new Func1<Pair<List<PullRequest>, Integer>, List<PullRequest>>() {
+            @Override
+            public List<PullRequest> call(Pair<List<PullRequest>, Integer> listIntegerPair) {
+                setPage(listIntegerPair.second);
+                return listIntegerPair.first;
+            }
+        }).subscribe(this);
     }
 
     @Override
@@ -126,49 +140,36 @@ public class PullRequestsListFragment extends PaginatedListFragment<List<PullReq
                 } else if (currentFilter == 1) {
                     issueInfo.state = IssueState.closed;
                 }
-                GetPullsClient issuesClient = new GetPullsClient(getActivity(), issueInfo, page);
-                issuesClient.setOnResultCallback(this);
-                issuesClient.execute();
+                setAction(new GetPullsClient(issueInfo, page));
             }
         }
     }
 
     @Override
-    public void onResponseOk(List<PullRequest> issues, Response r) {
-        super.onResponseOk(issues, r);
-
-        if (getAdapter() != null && refreshing) {
-            getAdapter().clear();
-        }
-        if (issues == null || issues.size() == 0 && (getAdapter() == null || getAdapter().getItemCount() == 0)) {
-            setEmpty(false);
-        }
-    }
-
-    @Override
-    protected void onResponse(List<PullRequest> issues, boolean refreshing) {
-        if (issues != null && issues.size() > 0) {
-
-            if (getAdapter() == null) {
-                PullRequestsAdapter issuesAdapter = new PullRequestsAdapter(LayoutInflater.from(getActivity()));
-                issuesAdapter.setIssuesAdapterListener(this);
-                issuesAdapter.addAll(issues);
-                setAdapter(issuesAdapter);
+    public void onNext(List<PullRequest> issues) {
+        if (issues.size() > 0) {
+            hideEmpty();
+            if (refreshing || getAdapter() == null) {
+                PullRequestsAdapter pullRequestsAdapter = new PullRequestsAdapter(LayoutInflater.from(getActivity()));
+                pullRequestsAdapter.setIssuesAdapterListener(this);
+                pullRequestsAdapter.addAll(issues);
+                setAdapter(pullRequestsAdapter);
             } else {
                 getAdapter().addAll(issues);
             }
         } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
 
     @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
+    public void onError(Throwable error) {
+        stopRefresh();
         if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            if (error != null && error.getResponse() != null) {
-                setEmpty(true, error.getResponse().getStatus());
-            }
+            setEmpty();
         }
     }
 
@@ -267,5 +268,10 @@ public class PullRequestsListFragment extends PaginatedListFragment<List<PullReq
     public void setRefreshing() {
         super.setRefreshing();
         startRefresh();
+    }
+
+    @Override
+    public void onCompleted() {
+        stopRefresh();
     }
 }

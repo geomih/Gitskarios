@@ -1,7 +1,6 @@
 package com.alorma.github.ui.adapter;
 
 import android.content.Intent;
-import android.graphics.drawable.ColorDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -11,15 +10,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.alorma.github.R;
-import com.alorma.github.emoji.EmojiBitmapLoader;
 import com.alorma.github.sdk.bean.dto.response.Release;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.ui.activity.ReleaseDetailActivity;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
-import com.github.mobile.util.HtmlUtils;
-import com.github.mobile.util.HttpImageGetter;
-
-import java.io.IOException;
 
 /**
  * Created by a557114 on 29/07/2015.
@@ -60,7 +54,8 @@ public class ReleasesAdapter extends RecyclerArrayAdapter<Release, ReleasesAdapt
                 size = size + 1;
             }
 
-            holder.filesRelease.setText(holder.filesRelease.getContext().getResources().getQuantityString(R.plurals.repo_release_num_files, size, size));
+            holder.filesRelease.setText(
+                    holder.filesRelease.getContext().getResources().getQuantityString(R.plurals.repo_release_num_files, size, size));
         }
     }
 

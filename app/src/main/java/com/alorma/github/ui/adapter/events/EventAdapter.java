@@ -2,41 +2,18 @@ package com.alorma.github.ui.adapter.events;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.GithubEvent;
-import com.alorma.github.sdk.bean.dto.response.events.EventType;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
-import com.alorma.github.ui.adapter.events.views.CommitCommentEventView;
-import com.alorma.github.ui.adapter.events.views.CreatedEventView;
-import com.alorma.github.ui.adapter.events.views.DeleteEventView;
-import com.alorma.github.ui.adapter.events.views.ForkEventView;
-import com.alorma.github.ui.adapter.events.views.GenericFeedEventView;
-import com.alorma.github.ui.adapter.events.views.GithubEventView;
-import com.alorma.github.ui.adapter.events.views.IssueCommentEventView;
-import com.alorma.github.ui.adapter.events.views.IssueEventView;
-import com.alorma.github.ui.adapter.events.views.PullRequestEventView;
-import com.alorma.github.ui.adapter.events.views.PushEventView;
-import com.alorma.github.ui.adapter.events.views.ReleaseEventView;
-import com.alorma.github.ui.adapter.events.views.UnhandledEventView;
-import com.alorma.github.ui.adapter.events.views.WatchEventView;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.utils.TimeUtils;
-import com.crashlytics.android.Crashlytics;
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.ImageScaleType;
-
-import java.util.Collection;
-
-import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by Bernat on 03/10/2014.
@@ -53,22 +30,27 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(getInflater().inflate(R.layout.payload_watch, parent, false));
+        return new ViewHolder(getInflater().inflate(R.layout.row_event, parent, false));
     }
 
     @Override
     protected void onBindViewHolder(ViewHolder holder, GithubEvent githubEvent) {
-        handleImage(holder.authorAvatar, githubEvent);
-        int textRes = R.string.event_generic_by;
 
-        String textForEvent = getTextForEvent(githubEvent);
+        if (holder != null) {
+            if (holder.authorAvatar != null) {
+                holder.authorAvatar.setUser(githubEvent.actor);
+            }
 
-        holder.authorName.setText(
-            Html.fromHtml(resources.getString(textRes, githubEvent.actor.login, textForEvent)));
+            int textRes = R.string.event_generic_by;
 
-        String timeString = TimeUtils.getTimeAgoString(githubEvent.created_at);
+            String textForEvent = getTextForEvent(githubEvent);
 
-        holder.textDate.setText(timeString);
+            holder.authorName.setText(Html.fromHtml(resources.getString(textRes, githubEvent.actor.login, textForEvent)));
+
+            String timeString = TimeUtils.getTimeAgoString(githubEvent.created_at);
+
+            holder.textDate.setText(timeString);
+        }
     }
 
     public String getTextForEvent(GithubEvent event) {
@@ -80,29 +62,19 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
                 }
                 return textRes + " " + "<b>" + event.repo.name + "</b>";
             case CreateEvent:
-                return "created repository" + " " + "<b>" + event.repo.name + "</b>";
+                if (event.payload.ref != null) {
+                    return "created branch <b>" + event.payload.ref + "</b> on repository" + " " + "<b>" + event.repo.name + "</b>";
+                } else {
+                    return "created repository" + " " + "<b>" + event.repo.name + "</b>";
+                }
             case CommitCommentEvent:
-                return "commented on commit "
-                    + "<b>"
-                    + event.repo.name
-                    + "@"
-                    + event.payload.comment.commit_id.substring(0, 10)
-                    + "</b>";
+                return "commented on commit " + "<b>" + event.repo.name + "@" + event.payload.comment.commit_id.substring(0, 10) + "</b>";
             case DownloadEvent:
                 return "";
             case FollowEvent:
                 return "";
             case ForkEvent:
-                return "forked"
-                    + " <b>"
-                    + event.repo.name
-                    + "</b>"
-                    + " "
-                    + "to"
-                    + " "
-                    + "<b>"
-                    + event.payload.forkee.full_name
-                    + "</b>";
+                return "forked" + " <b>" + event.repo.name + "</b>" + " " + "to" + " " + "<b>" + event.payload.forkee.full_name + "</b>";
             case GistEvent:
                 return "";
             case GollumEvent:
@@ -123,14 +95,7 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
                     action = "merged";
                 }
 
-                return action
-                    + " pull request"
-                    + " "
-                    + "<b>"
-                    + event.repo.name
-                    + "#"
-                    + event.payload.pull_request.number
-                    + "</b>";
+                return action + " pull request" + " " + "<b>" + event.repo.name + "#" + event.payload.pull_request.number + "</b>";
             case PullRequestReviewCommentEvent:
                 return "";
             case PushEvent:
@@ -154,28 +119,19 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
                 return "deleted " + deletedThing + "<b>" + event.repo.name + "</b>";
             case ReleaseEvent:
                 return event.payload.action
-                    + " "
-                    + "<b>"
-                    + event.payload.release.tag_name
-                    + "</b>"
-                    + " "
-                    + "at"
-                    + " "
-                    + "<b>"
-                    + event.repo.name
-                    + "</b>";
+                        + " "
+                        + "<b>"
+                        + event.payload.release.tag_name
+                        + "</b>"
+                        + " "
+                        + "at"
+                        + " "
+                        + "<b>"
+                        + event.repo.name
+                        + "</b>";
         }
 
         return "";
-    }
-
-    public void handleImage(ImageView imageView, GithubEvent event) {
-        ImageLoader.getInstance().cancelDisplayTask(imageView);
-        DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder().cacheOnDisk(true)
-            .imageScaleType(ImageScaleType.IN_SAMPLE_POWER_OF_2)
-            .bitmapConfig(Bitmap.Config.ALPHA_8)
-            .build();
-        ImageLoader.getInstance().displayImage(event.actor.avatar_url, imageView, displayImageOptions);
     }
 
     @Override
@@ -187,16 +143,20 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
         this.eventAdapterListener = eventAdapterListener;
     }
 
+    public interface EventAdapterListener {
+        void onItem(GithubEvent event);
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final ImageView authorAvatar;
+        private final UserAvatarView authorAvatar;
         private final TextView authorName;
         private final TextView textDate;
 
         private ViewHolder(View itemView) {
             super(itemView);
 
-            authorAvatar = (ImageView) itemView.findViewById(R.id.authorAvatar);
+            authorAvatar = (UserAvatarView) itemView.findViewById(R.id.authorAvatar);
             authorName = (TextView) itemView.findViewById(R.id.authorName);
             textDate = (TextView) itemView.findViewById(R.id.textDate);
 
@@ -209,9 +169,5 @@ public class EventAdapter extends RecyclerArrayAdapter<GithubEvent, EventAdapter
                 }
             });
         }
-    }
-
-    public interface EventAdapterListener {
-        void onItem(GithubEvent event);
     }
 }

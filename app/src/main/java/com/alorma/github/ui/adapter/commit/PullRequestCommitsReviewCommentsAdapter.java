@@ -9,7 +9,6 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,21 +22,19 @@ import com.alorma.github.sdk.bean.issue.IssueStoryReviewComment;
 import com.alorma.github.sdk.bean.issue.PullRequestStoryCommit;
 import com.alorma.github.ui.activity.CommitDetailActivity;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.ui.view.issue.ReviewCommentView;
-import com.alorma.github.utils.AttributesUtils;
 import com.alorma.github.utils.TextUtils;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by Bernat on 07/09/2014.
  */
-public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapter<IssueStoryDetail, PullRequestCommitsReviewCommentsAdapter.Holder> {
+public class PullRequestCommitsReviewCommentsAdapter
+        extends RecyclerArrayAdapter<IssueStoryDetail, PullRequestCommitsReviewCommentsAdapter.Holder> {
 
     private static final int VIEW_INVALID = -1;
     private static final int VIEW_COMMIT = 0;
@@ -55,7 +52,7 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
     @Override
     public PullRequestCommitsReviewCommentsAdapter.Holder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == VIEW_COMMIT) {
-            return new CommitViewHolder(getInflater().inflate(R.layout.commit_row, parent, false));
+            return new CommitViewHolder(getInflater().inflate(R.layout.row_commit, parent, false));
         } else if (viewType == VIEW_REVIEW) {
             return new ReviewCommentHolder(getInflater().inflate(R.layout.timeline_review_comment, parent, false));
         } else {
@@ -86,33 +83,8 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
         }
 
         if (author != null) {
-            if (author.avatar_url != null) {
-                ImageLoader.getInstance().displayImage(author.avatar_url, holder.avatar);
-            } else if (author.email != null) {
-                try {
-                    MessageDigest digest = MessageDigest.getInstance("MD5");
-                    digest.update(author.email.getBytes());
-                    byte messageDigest[] = digest.digest();
-                    StringBuffer hexString = new StringBuffer();
-                    for (int i = 0; i < messageDigest.length; i++)
-                        hexString.append(Integer.toHexString(0xFF & messageDigest[i]));
-                    String hash = hexString.toString();
-                    ImageLoader.getInstance().displayImage("http://www.gravatar.com/avatar/" + hash, holder.avatar);
-                } catch (NoSuchAlgorithmException e) {
-                    IconicsDrawable iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_octoface);
-                    iconDrawable.color(AttributesUtils.getSecondaryTextColor(holder.itemView.getContext()));
-                    iconDrawable.sizeDp(36);
-                    iconDrawable.setAlpha(128);
-                    holder.avatar.setImageDrawable(iconDrawable);
-                }
 
-            } else {
-                IconicsDrawable iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_octoface);
-                iconDrawable.color(AttributesUtils.getSecondaryTextColor(holder.itemView.getContext()));
-                iconDrawable.sizeDp(36);
-                iconDrawable.setAlpha(128);
-                holder.avatar.setImageDrawable(iconDrawable);
-            }
+            holder.avatar.setUser(author);
 
             if (author.login != null) {
                 holder.user.setText(author.login);
@@ -147,7 +119,8 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
         if (commit.stats != null) {
             String textCommitsStr = null;
             if (commit.stats.additions > 0 && commit.stats.deletions > 0) {
-                textCommitsStr = holder.itemView.getContext().getString(R.string.commit_file_add_del, commit.stats.additions, commit.stats.deletions);
+                textCommitsStr =
+                        holder.itemView.getContext().getString(R.string.commit_file_add_del, commit.stats.additions, commit.stats.deletions);
                 holder.textNums.setVisibility(View.VISIBLE);
             } else if (commit.stats.additions > 0) {
                 textCommitsStr = holder.itemView.getContext().getString(R.string.commit_file_add, commit.stats.additions);
@@ -186,7 +159,6 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
         textView.setCompoundDrawablePadding(offset);
     }
 
-
     private void handleReviewComment(ReviewCommentHolder holder, IssueStoryReviewComment comment) {
         holder.reviewCommentView.setReviewCommit(comment, repoInfo);
     }
@@ -211,7 +183,7 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
         private final TextView sha;
         private final TextView textNums;
         private final TextView numFiles;
-        private final ImageView avatar;
+        private final UserAvatarView avatar;
         private final TextView comments_count;
 
         public CommitViewHolder(final View itemView) {
@@ -223,7 +195,7 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
             textNums = (TextView) itemView.findViewById(R.id.textNums);
             numFiles = (TextView) itemView.findViewById(R.id.numFiles);
             comments_count = (TextView) itemView.findViewById(R.id.comments_count);
-            avatar = (ImageView) itemView.findViewById(R.id.avatarAuthor);
+            avatar = (UserAvatarView) itemView.findViewById(R.id.avatarAuthor);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -247,7 +219,8 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
                     if (getItem(getAdapterPosition()) instanceof PullRequestStoryCommit) {
                         Commit item = ((PullRequestStoryCommit) getItem(getAdapterPosition())).commit;
                         copy(item.shortSha());
-                        Toast.makeText(itemView.getContext(), itemView.getContext().getString(R.string.sha_copied, item.shortSha()), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(itemView.getContext(), itemView.getContext().getString(R.string.sha_copied, item.shortSha()), Toast.LENGTH_SHORT)
+                                .show();
                     }
                     return true;
                 }
@@ -260,7 +233,6 @@ public class PullRequestCommitsReviewCommentsAdapter extends RecyclerArrayAdapte
             clipboard.setPrimaryClip(clip);
         }
     }
-
 
     private class ReviewCommentHolder extends Holder {
         private ReviewCommentView reviewCommentView;

@@ -4,12 +4,11 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * <p/>
+ * <p>
  * Contributors:
  * Kevin Sawicki (GitHub Inc.) - initial API and implementation
  *****************************************************************************/
 package com.alorma.github.utils;
-
 
 import java.io.UnsupportedEncodingException;
 
@@ -21,7 +20,6 @@ public abstract class EncodingUtils {
     /**
      * Decode base64 encoded string
      *
-     * @param content
      * @return byte array
      */
     public static final byte[] fromBase64(final String content) {
@@ -31,7 +29,6 @@ public abstract class EncodingUtils {
     /**
      * Base64 encode given byte array
      *
-     * @param content
      * @return byte array
      */
     public static final String toBase64(final byte[] content) {
@@ -41,7 +38,6 @@ public abstract class EncodingUtils {
     /**
      * Base64 encode given byte array
      *
-     * @param content
      * @return byte array
      */
     public static final String toBase64(final String content) {

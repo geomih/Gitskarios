@@ -2,7 +2,6 @@ package com.alorma.github.ui.adapter.commit;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,8 +43,7 @@ public class GithubStatusAdapter extends RecyclerArrayAdapter<GithubStatus, Gith
             background = R.drawable.github_status_circle_red;
         }
 
-        IconicsDrawable drawable = new IconicsDrawable(holder.icon.getContext(), icon)
-                .colorRes(R.color.white)
+        IconicsDrawable drawable = new IconicsDrawable(holder.icon.getContext(), icon).colorRes(R.color.white)
                 .sizeRes(R.dimen.material_drawer_item_primary)
                 .paddingRes(R.dimen.gapMedium);
         holder.icon.setImageDrawable(drawable);

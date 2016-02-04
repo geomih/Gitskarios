@@ -34,7 +34,7 @@ public class FileActivity extends BackActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.generic_toolbar);
 
-        info = getIntent().getExtras().<FileInfo>getParcelable(FileFragment.FILE_INFO);
+        info = (FileInfo) getIntent().getExtras().getParcelable(FileFragment.FILE_INFO);
         fromUrl = getIntent().getExtras().getBoolean(FileFragment.FROM_URL);
 
         FileFragment fileFragment = FileFragment.getInstance(info, fromUrl);
@@ -49,9 +49,7 @@ public class FileActivity extends BackActivity {
         if (navigateUp && fromUrl) {
             Intent upIntent = RepoDetailActivity.createLauncherIntent(this, info.repoInfo);
             upIntent.putExtra(RepoDetailActivity.FROM_URL, fromUrl);
-            TaskStackBuilder.create(this)
-                    .addNextIntentWithParentStack(upIntent)
-                    .startActivities();
+            TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
             finish();
         } else {
             super.close(navigateUp);

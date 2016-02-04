@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@id/listContentFL"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/gray_github_light">
+    android:layout_height="match_parent">
 
     <android.support.v7.widget.RecyclerView
         android:id="@id/recycler"
@@ -13,11 +11,11 @@
         android:drawSelectorOnTop="false" />
 
     <!--<include-->
-        <!--layout="@layout/fab"-->
-        <!--android:layout_width="@dimen/fab"-->
-        <!--android:layout_height="@dimen/fab"-->
-        <!--android:layout_gravity="bottom|right|end"-->
-        <!--android:layout_margin="@dimen/gapLarge"-->
-        <!--android:visibility="gone" />-->
+    <!--layout="@layout/fab"-->
+    <!--android:layout_width="@dimen/fab"-->
+    <!--android:layout_height="@dimen/fab"-->
+    <!--android:layout_gravity="bottom|right|end"-->
+    <!--android:layout_margin="@dimen/gapLarge"-->
+    <!--android:visibility="gone" />-->
 
 </FrameLayout>

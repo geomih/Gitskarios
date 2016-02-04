@@ -22,7 +22,6 @@ import com.alorma.github.ui.activity.ProfileActivity;
 import com.alorma.github.ui.activity.PullRequestDetailActivity;
 import com.alorma.github.ui.activity.ReleaseDetailActivity;
 import com.alorma.github.ui.activity.RepoDetailActivity;
-import com.alorma.gitskarios.core.client.StoreCredentials;
 import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
@@ -35,6 +34,9 @@ public class UrlsManager {
     private static final int URI_BASE = 0;
     private static final int URI_USER = 1;
     private static final int URI_REPO = 2;
+    private static final int URI_REPO_NUMS = 16;
+    private static final int URI_REPO_NUMS2 = 17;
+    private static final int URI_REPO_NUMS3 = 18;
     private static final int URI_ISSUE = 3;
     private static final int URI_COMMIT = 4;
     private static final int URI_REPO_BRANCH = 5;
@@ -49,7 +51,6 @@ public class UrlsManager {
     private static final int URI_PULL_REQUEST = 14;
     private static final int URI_ISSUE_COMMENT = 15;
 
-
     private final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     private Context context;
 
@@ -63,6 +64,23 @@ public class UrlsManager {
         if (credentials.getUrl() != null) {
             Uri uri = Uri.parse(credentials.getUrl());
             host = uri.getAuthority();
+
+            if (host == null) {
+                host = credentials.getUrl();
+            }
+
+            if (host != null) {
+                if (!host.startsWith("http://")) {
+                    host = "http://" + host;
+                }
+
+                Uri newUri = Uri.parse(host);
+
+                if (!"https".equals(newUri.getScheme())) {
+                    newUri = newUri.buildUpon().scheme("https").build();
+                }
+                host = newUri.getAuthority();
+            }
         }
 
         uriMatcher.addURI(host, "", URI_BASE + i);
@@ -70,8 +88,6 @@ public class UrlsManager {
             uriMatcher.addURI(host, key, UriMatcher.NO_MATCH + i++);
         }
 
-//        uriMatcher.addURI("github.com", "*/*/releases/latest", URI_RELEASES_LATEST);
-//        uriMatcher.addURI("github.com", "*/*/releases/tag/*", URI_RELEASES_TAG);
         uriMatcher.addURI(host, "*/*/releases", URI_RELEASES);
         uriMatcher.addURI(host, "*/*/releases/#", URI_RELEASES_IDENTIFIER);
 
@@ -89,6 +105,9 @@ public class UrlsManager {
         uriMatcher.addURI(host, "*/*/tree/*", URI_REPO_BRANCH);
 
         uriMatcher.addURI(host, "*/*", URI_REPO);
+        uriMatcher.addURI(host, "*/#", URI_REPO_NUMS);
+        uriMatcher.addURI(host, "#/*", URI_REPO_NUMS2);
+        uriMatcher.addURI(host, "#/#", URI_REPO_NUMS3);
 
         uriMatcher.addURI(host, "*", URI_USER);
     }
@@ -120,6 +139,9 @@ public class UrlsManager {
         if (matched) {
             switch (uriMatcher.match(uri)) {
                 case URI_REPO:
+                case URI_REPO_NUMS:
+                case URI_REPO_NUMS2:
+                case URI_REPO_NUMS3:
                 case URI_REPO_BRANCH:
                 case URI_REPO_BRANCH_FEATURE:
                 case URI_REPO_BRANCH_RELEASE:
@@ -165,9 +187,15 @@ public class UrlsManager {
     }
 
     private Uri normalizeUri(Uri uri) {
-        if (uri != null && uri.getAuthority() != null && uri.getAuthority().contains("api.")) {
-            String authority = uri.getAuthority().replace("api.", "");
-            uri = uri.buildUpon().authority(authority).build();
+        if (uri != null && uri.getAuthority() != null) {
+            if (uri.getPath().contains("/api/v3/")) {
+                String authority = uri.getPath().replace("/api/v3/", "/");
+                uri = uri.buildUpon().path(authority).build();
+            } else if (uri.getAuthority().contains("api.")) {
+                String authority = uri.getAuthority().replace("api.", "");
+                uri = uri.buildUpon().authority(authority).build();
+            }
+
             if (uri.getPath().contains("repos/")) {
                 String path = uri.getPath().replace("repos/", "");
                 uri = uri.buildUpon().path(path).build();
@@ -187,20 +215,11 @@ public class UrlsManager {
     public Intent manageRepos(Uri uri) {
 
         uri = normalizeUri(uri);
-
-        switch (uriMatcher.match(uri)) {
-            case URI_REPO:
-            case URI_REPO_BRANCH:
-            case URI_REPO_BRANCH_FEATURE:
-            case URI_REPO_BRANCH_RELEASE:
-            case URI_REPO_BRANCH_HOTFIX:
-                RepoInfo repoInfo = extractRepo(uri);
-                return RepoDetailActivity.createLauncherIntent(context, repoInfo);
-        }
+        RepoInfo repoInfo = extractRepo(uri);
         if (Fabric.isInitialized()) {
             Crashlytics.log(uri.toString());
         }
-        return null;
+        return RepoDetailActivity.createLauncherIntent(context, repoInfo);
     }
 
     private RepoInfo extractRepo(Uri uri) {
@@ -211,7 +230,9 @@ public class UrlsManager {
 
         if (uriMatcher.match(uri) == URI_REPO_BRANCH) {
             repoInfo.branch = uri.getLastPathSegment();
-        } else if (uriMatcher.match(uri) == URI_REPO_BRANCH_FEATURE || uriMatcher.match(uri) == URI_REPO_BRANCH_RELEASE || uriMatcher.match(uri) == URI_REPO_BRANCH_HOTFIX) {
+        } else if (uriMatcher.match(uri) == URI_REPO_BRANCH_FEATURE
+                || uriMatcher.match(uri) == URI_REPO_BRANCH_RELEASE
+                || uriMatcher.match(uri) == URI_REPO_BRANCH_HOTFIX) {
             repoInfo.branch = uri.getPathSegments().get(3) + "/" + uri.getPathSegments().get(4);
         }
 
@@ -265,9 +286,7 @@ public class UrlsManager {
     }
 
     private Intent manageReleasesWithId(Uri uri) {
-        ReleaseInfo info = new ReleaseInfo();
-
-        info.repoInfo = extractRepo(uri);
+        ReleaseInfo info = new ReleaseInfo(extractRepo(uri));
 
         info.num = Integer.valueOf(uri.getLastPathSegment());
 

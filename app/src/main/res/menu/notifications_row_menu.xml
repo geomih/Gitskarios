@@ -3,9 +3,9 @@
 
     <item
         android:id="@+id/action_notification_unsubscribe"
-        android:title="@string/notifications_unsubscribe"/>
+        android:title="@string/notifications_unsubscribe" />
     <item
         android:id="@+id/action_notification_mark_read"
-        android:title="@string/notifications_read"/>
+        android:title="@string/notifications_read" />
 
 </menu>

@@ -24,23 +24,21 @@ import static java.util.Locale.US;
  */
 public class MarkdownUtils {
 
-    private static final String[] MARKDOWN_EXTENSIONS = {".md", ".mkdn",
-            ".mdwn", ".mdown", ".markdown", ".mkd", ".mkdown", ".ron"};
+    private static final String[] MARKDOWN_EXTENSIONS = {
+            ".md", ".mkdn", ".mdwn", ".mdown", ".markdown", ".mkd", ".mkdown", ".ron", ".rst"
+    };
 
     /**
      * Is the the given file name a Markdown file?
      *
-     * @param name
      * @return true if the name has a markdown extension, false otherwise
      */
     public static boolean isMarkdown(String name) {
-        if (TextUtils.isEmpty(name))
-            return false;
+        if (TextUtils.isEmpty(name)) return false;
 
         name = name.toLowerCase(US);
         for (String extension : MARKDOWN_EXTENSIONS)
-            if (name.endsWith(extension))
-                return true;
+            if (name.endsWith(extension) || name.equals("README")) return true;
 
         return false;
     }

@@ -11,6 +11,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 
+import com.alorma.github.ui.activity.WelcomeActivity;
+
 /**
  * Created by Bernat on 27/03/2015.
  */
@@ -51,9 +53,10 @@ public class AccountService extends Service {
         }
 
         @Override
-        public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] strings, Bundle bundle) throws NetworkErrorException {
+        public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] strings,
+                                 Bundle bundle) throws NetworkErrorException {
             Bundle reply = new Bundle();
-            Intent intent = new Intent(context, GithubLoginFragment.class);
+            Intent intent = new Intent(context, WelcomeActivity.class);
             intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
             reply.putParcelable(AccountManager.KEY_INTENT, intent);
 
@@ -61,14 +64,16 @@ public class AccountService extends Service {
         }
 
         @Override
-        public Bundle confirmCredentials(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, Bundle bundle) throws NetworkErrorException {
+        public Bundle confirmCredentials(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, Bundle bundle)
+                throws NetworkErrorException {
             return null;
         }
 
         @Override
-        public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle bundle) throws NetworkErrorException {
+        public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle bundle)
+                throws NetworkErrorException {
             Bundle reply = new Bundle();
-            Intent intent = new Intent(context, GithubLoginFragment.class);
+            Intent intent = new Intent(context, WelcomeActivity.class);
             intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
             reply.putParcelable(AccountManager.KEY_INTENT, intent);
 
@@ -81,12 +86,14 @@ public class AccountService extends Service {
         }
 
         @Override
-        public Bundle updateCredentials(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, String s, Bundle bundle) throws NetworkErrorException {
+        public Bundle updateCredentials(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, String s, Bundle bundle)
+                throws NetworkErrorException {
             return null;
         }
 
         @Override
-        public Bundle hasFeatures(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, String[] strings) throws NetworkErrorException {
+        public Bundle hasFeatures(AccountAuthenticatorResponse accountAuthenticatorResponse, Account account, String[] strings)
+                throws NetworkErrorException {
             return null;
         }
     }

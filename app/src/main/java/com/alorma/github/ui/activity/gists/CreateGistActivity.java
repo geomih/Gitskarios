@@ -1,6 +1,5 @@
 package com.alorma.github.ui.activity.gists;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -21,19 +20,16 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Gist;
 import com.alorma.github.sdk.bean.dto.response.GistFile;
+import com.alorma.github.sdk.bean.dto.response.GistFilesMap;
 import com.alorma.github.sdk.services.gists.PublishGistClient;
 import com.alorma.github.ui.activity.base.BackActivity;
 import com.alorma.github.ui.adapter.GistCreatedDetailFilesAdapter;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import dmax.dialog.SpotsDialog;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 02/04/2015.
@@ -45,7 +41,6 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
 
     private GistCreatedDetailFilesAdapter adapter;
     private boolean sharingMode;
-    private AlertDialog spotsDialog;
     private EditText gistDescription;
     private Switch gistPrivate;
     private RecyclerView recyclerView;
@@ -58,7 +53,7 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create);
+        setContentView(R.layout.activity_create_gist);
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -86,7 +81,6 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
                 launchEmptyEditor();
             }
         });
-
     }
 
     private void launchEmptyEditor() {
@@ -115,7 +109,7 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
         super.onActivityResult(requestCode, resultCode, data);
 
         if (data != null && resultCode == RESULT_OK) {
-            GistFile file = data.getParcelableExtra(GistEditorActivity.EXTRA_FILE);
+            GistFile file = (GistFile) data.getParcelableExtra(GistEditorActivity.EXTRA_FILE);
             if (file != null) {
                 switch (requestCode) {
                     case GIST_FILE_CREATOR:
@@ -155,7 +149,7 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
 
         return true;
     }
-    
+
     private void showDialogNotEmpty() {
         MaterialDialog.Builder builder = new MaterialDialog.Builder(this);
         builder.content(R.string.gist_creator_not_empty);
@@ -198,7 +192,7 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
             Gist gist = new Gist();
             gist.isPublic = !gistPrivate.isChecked();
             gist.description = gistDescription.getText().toString();
-            Map<String, GistFile> files = new HashMap<>();
+            GistFilesMap files = new GistFilesMap();
             for (GistFile gistFile : adapter.getItems()) {
                 if (!TextUtils.isEmpty(gistFile.filename) && !TextUtils.isEmpty(gistFile.content)) {
                     files.put(gistFile.filename, gistFile);
@@ -206,30 +200,27 @@ public class CreateGistActivity extends BackActivity implements GistCreatedDetai
             }
             gist.files = files;
 
-            spotsDialog = new SpotsDialog.Builder(this)
-                    .setMessage(R.string.publishing_gist)
-                    .setCancelable(false)
-                    .show();
+            showProgressDialog(R.string.publishing_gist);
 
-            PublishGistClient publishGistClient = new PublishGistClient(this, gist);
-            publishGistClient.setOnResultCallback(new BaseClient.OnResultCallback<Gist>() {
+            PublishGistClient publishGistClient = new PublishGistClient(gist);
+            publishGistClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<Gist>() {
                 @Override
-                public void onResponseOk(Gist gist, Response r) {
-                    if (spotsDialog != null) {
-                        spotsDialog.dismiss();
-                    }
-                    finish();
+                public void onCompleted() {
+
                 }
 
                 @Override
-                public void onFail(RetrofitError error) {
-                    if (spotsDialog != null) {
-                        spotsDialog.dismiss();
-                    }
+                public void onError(Throwable e) {
+                    hideProgressDialog();
                     Snackbar.make(recyclerView, R.string.publish_gist_fail, Snackbar.LENGTH_SHORT).show();
                 }
+
+                @Override
+                public void onNext(Gist gist) {
+                    hideProgressDialog();
+                    finish();
+                }
             });
-            publishGistClient.execute();
         }
     }
 

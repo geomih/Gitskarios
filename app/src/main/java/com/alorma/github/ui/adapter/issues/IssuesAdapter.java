@@ -103,6 +103,10 @@ public class IssuesAdapter extends RecyclerArrayAdapter<Issue, IssuesAdapter.Vie
         this.issuesAdapterListener = issuesAdapterListener;
     }
 
+    public interface IssuesAdapterListener {
+        void onIssueOpenRequest(Issue issue);
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView title;
         private final TextView info;
@@ -130,9 +134,5 @@ public class IssuesAdapter extends RecyclerArrayAdapter<Issue, IssuesAdapter.Vie
                 }
             });
         }
-    }
-
-    public interface IssuesAdapterListener {
-        void onIssueOpenRequest(Issue issue);
     }
 }

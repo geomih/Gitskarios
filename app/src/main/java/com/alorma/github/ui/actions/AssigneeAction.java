@@ -1,7 +1,6 @@
 package com.alorma.github.ui.actions;
 
 import android.content.Context;
-import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
@@ -11,19 +10,11 @@ import com.alorma.github.sdk.bean.dto.request.EditIssueRequestDTO;
 import com.alorma.github.sdk.bean.dto.response.Issue;
 import com.alorma.github.sdk.bean.dto.response.User;
 import com.alorma.github.sdk.bean.info.IssueInfo;
-import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.services.issues.EditIssueClient;
-import com.alorma.github.sdk.services.repo.GetRepoCollaboratorsClient;
-import com.alorma.github.ui.ErrorHandler;
-import com.alorma.github.ui.adapter.users.UsersAdapterSpinner;
-import com.alorma.gitskarios.core.client.BaseClient;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 12/10/2015.
@@ -43,11 +34,7 @@ public class AssigneeAction extends Action<Boolean> {
 
     @Override
     public Action<Boolean> execute() {
-        dialog = new MaterialDialog.Builder(context)
-                .content(R.string.changing_assignee)
-                .progress(true, 0)
-                .theme(Theme.DARK)
-                .show();
+        dialog = new MaterialDialog.Builder(context).content(R.string.changing_assignee).progress(true, 0).theme(Theme.DARK).show();
         EditIssueAssigneeRequestDTO editIssueRequestDTO = new EditIssueAssigneeRequestDTO();
         if (user != null) {
             editIssueRequestDTO.assignee = user.login;
@@ -59,19 +46,23 @@ public class AssigneeAction extends Action<Boolean> {
     }
 
     private void executeEditIssue(final EditIssueRequestDTO editIssueRequestDTO) {
-        EditIssueClient client = new EditIssueClient(context, issueInfo, editIssueRequestDTO);
-        client.setOnResultCallback(new BaseClient.OnResultCallback<Issue>() {
+        EditIssueClient client = new EditIssueClient(issueInfo, editIssueRequestDTO);
+        client.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<Issue>() {
             @Override
-            public void onResponseOk(Issue issue, Response r) {
-                returnResult(true);
+            public void onCompleted() {
+
             }
 
             @Override
-            public void onFail(RetrofitError error) {
+            public void onError(Throwable e) {
                 returnResult(false);
             }
+
+            @Override
+            public void onNext(Issue issue) {
+                returnResult(true);
+            }
         });
-        client.execute();
     }
 
     private void returnResult(boolean t) {
@@ -81,5 +72,10 @@ public class AssigneeAction extends Action<Boolean> {
         if (getCallback() != null) {
             getCallback().onResult(t);
         }
+    }
+
+    @Override
+    public void onNext(Boolean aBoolean) {
+
     }
 }

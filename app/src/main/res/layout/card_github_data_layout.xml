@@ -1,186 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:id="@+id/dataCardLayout"
-                                    android:layout_margin="@dimen/gapMedium">
+    android:id="@+id/dataCardLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/gapMedium">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/repositories"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_height"
-            android:gravity="center_vertical"
-            android:id="@+id/repositories"
             android:background="?android:selectableItemBackground"
-            android:clickable="true">
+            android:clickable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iconRepositories"
                 android:layout_width="@dimen/card_row_item_image_size"
                 android:layout_height="@dimen/card_row_item_image_size"
-                android:padding="@dimen/card_row_item_image_padding"
-                android:layout_marginLeft="@dimen/card_row_item_margin"
-                android:layout_marginStart="@dimen/card_row_item_margin"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/iconRepositories"/>
+                android:layout_marginLeft="@dimen/card_row_item_margin"
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:layout_marginStart="@dimen/card_row_item_margin"
+                android:padding="@dimen/card_row_item_image_padding" />
 
             <TextView
+                android:id="@+id/textRepositories"
+                style="@style/card_row_item_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/textRepositories"
-                style="@style/card_row_item_text"/>
+                android:layout_marginRight="@dimen/card_row_item_margin" />
         </LinearLayout>
 
         <View
             android:id="@+id/dividerRepositories"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_divider_height"
-            android:background="@drawable/divider_inside_car"
             android:layout_marginLeft="@dimen/card_row_item_divider_left_margin"
-            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"/>
+            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"
+            android:background="@drawable/divider_inside_car" />
 
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/gists"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_height"
-            android:gravity="center_vertical"
-            android:id="@+id/gists"
+            android:background="?android:selectableItemBackground"
             android:clickable="true"
-            android:background="?android:selectableItemBackground">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iconGists"
                 android:layout_width="@dimen/card_row_item_image_size"
                 android:layout_height="@dimen/card_row_item_image_size"
-                android:padding="@dimen/card_row_item_image_padding"
-                android:layout_marginLeft="@dimen/card_row_item_margin"
-                android:layout_marginStart="@dimen/card_row_item_margin"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/iconGists"/>
+                android:layout_marginLeft="@dimen/card_row_item_margin"
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:layout_marginStart="@dimen/card_row_item_margin"
+                android:padding="@dimen/card_row_item_image_padding" />
 
             <TextView
+                android:id="@+id/textGists"
+                style="@style/card_row_item_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/textGists"
-                style="@style/card_row_item_text"/>
+                android:layout_marginRight="@dimen/card_row_item_margin" />
         </LinearLayout>
 
         <View
             android:id="@+id/dividerGists"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_divider_height"
-            android:background="@drawable/divider_inside_car"
             android:layout_marginLeft="@dimen/card_row_item_divider_left_margin"
-            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"/>
+            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"
+            android:background="@drawable/divider_inside_car" />
 
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/orgs"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_height"
-            android:gravity="center_vertical"
-            android:id="@+id/orgs"
             android:background="?android:selectableItemBackground"
-            android:clickable="true">
+            android:clickable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iconOrgs"
                 android:layout_width="@dimen/card_row_item_image_size"
                 android:layout_height="@dimen/card_row_item_image_size"
-                android:padding="@dimen/card_row_item_image_padding"
-                android:layout_marginLeft="@dimen/card_row_item_margin"
-                android:layout_marginStart="@dimen/card_row_item_margin"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/iconOrgs"/>
+                android:layout_marginLeft="@dimen/card_row_item_margin"
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:layout_marginStart="@dimen/card_row_item_margin"
+                android:padding="@dimen/card_row_item_image_padding" />
 
             <TextView
+                android:id="@+id/textOrgs"
+                style="@style/card_row_item_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/textOrgs"
-                style="@style/card_row_item_text"/>
+                android:layout_marginRight="@dimen/card_row_item_margin" />
         </LinearLayout>
 
         <View
             android:id="@+id/dividerOrgs"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_divider_height"
-            android:background="@drawable/divider_inside_car"
             android:layout_marginLeft="@dimen/card_row_item_divider_left_margin"
-            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"/>
+            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"
+            android:background="@drawable/divider_inside_car" />
 
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/starreds"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_height"
-            android:gravity="center_vertical"
-            android:id="@+id/starreds"
+            android:background="?android:selectableItemBackground"
             android:clickable="true"
-            android:background="?android:selectableItemBackground">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iconStarreds"
                 android:layout_width="@dimen/card_row_item_image_size"
                 android:layout_height="@dimen/card_row_item_image_size"
-                android:padding="@dimen/card_row_item_image_padding"
-                android:layout_marginLeft="@dimen/card_row_item_margin"
-                android:layout_marginStart="@dimen/card_row_item_margin"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/iconStarreds"/>
+                android:layout_marginLeft="@dimen/card_row_item_margin"
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:layout_marginStart="@dimen/card_row_item_margin"
+                android:padding="@dimen/card_row_item_image_padding" />
 
             <TextView
+                android:id="@+id/textStarreds"
+                style="@style/card_row_item_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/textStarreds"
-                android:text="@string/profile_starreds"
-                style="@style/card_row_item_text"/>
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:text="@string/profile_starreds" />
         </LinearLayout>
+
         <View
             android:id="@+id/dividerStarreds"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_divider_height"
-            android:background="@drawable/divider_inside_car"
             android:layout_marginLeft="@dimen/card_row_item_divider_left_margin"
-            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"/>
+            android:layout_marginStart="@dimen/card_row_item_divider_left_margin"
+            android:background="@drawable/divider_inside_car" />
 
         <LinearLayout
-            android:orientation="horizontal"
+            android:id="@+id/watcheds"
             android:layout_width="match_parent"
             android:layout_height="@dimen/card_row_item_height"
-            android:gravity="center_vertical"
-            android:id="@+id/watcheds"
+            android:background="?android:selectableItemBackground"
             android:clickable="true"
-            android:background="?android:selectableItemBackground">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iconWatcheds"
                 android:layout_width="@dimen/card_row_item_image_size"
                 android:layout_height="@dimen/card_row_item_image_size"
-                android:padding="@dimen/card_row_item_image_padding"
-                android:layout_marginLeft="@dimen/card_row_item_margin"
-                android:layout_marginStart="@dimen/card_row_item_margin"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/iconWatcheds"/>
+                android:layout_marginLeft="@dimen/card_row_item_margin"
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:layout_marginStart="@dimen/card_row_item_margin"
+                android:padding="@dimen/card_row_item_image_padding" />
 
             <TextView
+                android:id="@+id/textWatcheds"
+                style="@style/card_row_item_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="@dimen/card_row_item_margin"
                 android:layout_marginEnd="@dimen/card_row_item_margin"
-                android:id="@+id/textWatcheds"
-                android:text="@string/profile_watched"
-                style="@style/card_row_item_text"/>
+                android:layout_marginRight="@dimen/card_row_item_margin"
+                android:text="@string/profile_watched" />
         </LinearLayout>
 
     </LinearLayout>

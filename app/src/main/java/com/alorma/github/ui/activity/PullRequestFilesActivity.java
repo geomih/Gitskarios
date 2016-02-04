@@ -6,16 +6,15 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 
 import com.alorma.github.R;
-import com.alorma.github.sdk.PullRequest;
+import com.alorma.github.sdk.bean.dto.response.PullRequest;
 import com.alorma.github.sdk.bean.info.IssueInfo;
 import com.alorma.github.ui.activity.base.BackActivity;
-import com.alorma.github.ui.fragment.pullrequest.PullRequestCommitsListFragment;
 import com.alorma.github.ui.fragment.pullrequest.PullRequestFilesListFragment;
 
 /**
  * Created by Bernat on 17/06/2015.
  */
-public class PullRequestFilesActivity extends BackActivity  {
+public class PullRequestFilesActivity extends BackActivity {
 
     public static final String ISSUE_INFO = "ISSUE_INFO";
 
@@ -31,7 +30,7 @@ public class PullRequestFilesActivity extends BackActivity  {
         setContentView(R.layout.generic_toolbar);
 
         if (getIntent() != null && getIntent().getExtras() != null) {
-            IssueInfo info = getIntent().getParcelableExtra(ISSUE_INFO);
+            IssueInfo info = (IssueInfo) getIntent().getParcelableExtra(ISSUE_INFO);
 
             setTitle(info.toString());
 

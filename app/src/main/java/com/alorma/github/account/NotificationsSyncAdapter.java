@@ -31,6 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by Bernat on 07/06/2015.
  */
@@ -52,45 +56,47 @@ public class NotificationsSyncAdapter extends AbstractThreadedSyncAdapter {
         String token = AccountManager.get(getContext()).getUserData(account, AccountManager.KEY_AUTHTOKEN);
 
         if (token != null) {
-            NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            final NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(token.hashCode());
 
-            GetNotificationsClient notificationsClient = new GetNotificationsClient(getContext(), token);
-            List<Notification> notifications = notificationsClient.executeSync();
+            GetNotificationsClient notificationsClient = new GetNotificationsClient(token);
+            notificationsClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new NotificationsSubscriber(account, token));
+        }
+    }
 
-            if (notifications != null) {
-                List<Notification> newNotifications = new ArrayList<>();
+    private void onNotificationsReceived(List<Notification> notifications, Account account, String token) {
+        if (notifications != null) {
+            List<Notification> newNotifications = new ArrayList<>();
+
+            for (Notification notification : notifications) {
+                boolean showNotification = NotificationsHelper.checkNotFireNotification(getContext(), notification.id);
+                if (showNotification) {
+                    newNotifications.add(notification);
+                }
+            }
+            notifications = newNotifications;
+
+            if (notifications.size() == 1) {
+                fireSingleNotifications(account.name, token, notifications.get(0));
+            } else if (notifications.size() > 0) {
+                Map<Long, List<Notification>> notificationMap = new HashMap<>();
 
                 for (Notification notification : notifications) {
-                    boolean showNotification = NotificationsHelper.checkNotFireNotification(getContext(), notification.id);
-                    if (showNotification) {
-                        newNotifications.add(notification);
+                    if (notification.repository != null) {
+                        if (notificationMap.get(notification.repository.id) == null) {
+                            notificationMap.put(notification.repository.id, new ArrayList<Notification>());
+                        }
+                        notificationMap.get(notification.repository.id).add(notification);
                     }
                 }
-                notifications = newNotifications;
 
-                if (notifications.size() == 1) {
-                    fireSingleNotifications(account.name, token, notifications.get(0));
-                } else if (notifications.size() > 0) {
-                    Map<Long, List<Notification>> notificationMap = new HashMap<>();
-
-                    for (Notification notification : notifications) {
-                        if (notification.repository != null) {
-                            if (notificationMap.get(notification.repository.id) == null) {
-                                notificationMap.put(notification.repository.id, new ArrayList<Notification>());
-                            }
-                            notificationMap.get(notification.repository.id).add(notification);
-                        }
-                    }
-
-                    for (Long repoId : notificationMap.keySet()) {
-                        List<Notification> notificationList = notificationMap.get(repoId);
-                        if (notificationList != null) {
-                            if (notificationList.size() == 1) {
-                                fireSingleNotifications(account.name, token, notificationList.get(0));
-                            } else {
-                                fireNotificationByRepository(account.name, token, repoId, notificationList);
-                            }
+                for (Long repoId : notificationMap.keySet()) {
+                    List<Notification> notificationList = notificationMap.get(repoId);
+                    if (notificationList != null) {
+                        if (notificationList.size() == 1) {
+                            fireSingleNotifications(account.name, token, notificationList.get(0));
+                        } else {
+                            fireNotificationByRepository(account.name, token, repoId, notificationList);
                         }
                     }
                 }
@@ -117,8 +123,7 @@ public class NotificationsSyncAdapter extends AbstractThreadedSyncAdapter {
 
             ColorGenerator generator = ColorGenerator.MATERIAL;
 
-            TextDrawable drawable = TextDrawable
-                    .builder()
+            TextDrawable drawable = TextDrawable.builder()
                     .beginConfig()
                     .width(shape_notifications_avatar)
                     .height(shape_notifications_avatar)
@@ -157,8 +162,8 @@ public class NotificationsSyncAdapter extends AbstractThreadedSyncAdapter {
             PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), 0, intentNotificationsActivity, 0);
 
             Intent intentDisableService = NotificationsDisableService.createIntentSingleNotification(getContext(), githubNotification);
-            PendingIntent cancelIntent = PendingIntent.getService(getContext(), (int) githubNotification.id,
-                    intentDisableService, PendingIntent.FLAG_ONE_SHOT);
+            PendingIntent cancelIntent =
+                    PendingIntent.getService(getContext(), (int) githubNotification.id, intentDisableService, PendingIntent.FLAG_ONE_SHOT);
 
             NotificationCompat.Builder builder = createNotificationBuilder(githubNotification.repository, account, pendingIntent, cancelIntent);
 
@@ -221,5 +226,32 @@ public class NotificationsSyncAdapter extends AbstractThreadedSyncAdapter {
         NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(notificationId, notification);
+    }
+
+    private class NotificationsSubscriber extends Subscriber<List<Notification>> {
+
+        private Account account;
+        private String token;
+
+        public NotificationsSubscriber(Account account, String token) {
+
+            this.account = account;
+            this.token = token;
+        }
+
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onNext(List<Notification> notifications) {
+            onNotificationsReceived(notifications, account, token);
+        }
     }
 }

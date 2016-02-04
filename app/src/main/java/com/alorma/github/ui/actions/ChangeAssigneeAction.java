@@ -2,11 +2,8 @@ package com.alorma.github.ui.actions;
 
 import android.content.Context;
 
-import com.afollestad.materialdialogs.MaterialDialog;
-import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.User;
 import com.alorma.github.sdk.bean.info.IssueInfo;
-import com.alorma.github.sdk.bean.info.RepoInfo;
 
 /**
  * Created by Bernat on 12/10/2015.
@@ -37,5 +34,10 @@ public class ChangeAssigneeAction extends Action<Boolean> implements ActionCallb
                 }
             }
         }).execute();
+    }
+
+    @Override
+    public void onNext(Boolean aBoolean) {
+
     }
 }

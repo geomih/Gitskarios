@@ -9,12 +9,8 @@ import android.widget.ArrayAdapter;
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.User;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by Bernat on 14/07/2014.

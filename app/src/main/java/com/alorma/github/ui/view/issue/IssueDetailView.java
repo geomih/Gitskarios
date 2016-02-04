@@ -9,12 +9,11 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alorma.github.R;
-import com.alorma.gitskarios.core.client.StoreCredentials;
+import com.alorma.github.StoreCredentials;
 import com.alorma.github.sdk.bean.dto.response.Issue;
 import com.alorma.github.sdk.bean.dto.response.IssueState;
 import com.alorma.github.sdk.bean.dto.response.Label;
@@ -26,14 +25,18 @@ import com.alorma.github.ui.activity.ProfileActivity;
 import com.alorma.github.ui.activity.RepoDetailActivity;
 import com.alorma.github.ui.listeners.IssueDetailRequestListener;
 import com.alorma.github.ui.view.LabelView;
+import com.alorma.github.ui.view.UserAvatarView;
+import com.alorma.github.utils.AttributesUtils;
 import com.alorma.github.utils.TimeUtils;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
 import com.github.mobile.util.HttpImageGetter;
 import com.mikepenz.iconics.IconicsDrawable;
+import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.wefika.flowlayout.FlowLayout;
+
+import org.w3c.dom.Attr;
 
 /**
  * Created by Bernat on 08/04/2015.
@@ -45,7 +48,7 @@ public class IssueDetailView extends LinearLayout {
     private TextView title;
     private TextView body;
     private ViewGroup labelsLayout;
-    private ImageView profileIcon;
+    private UserAvatarView profileIcon;
     private TextView profileName;
     private TextView profileEmail;
     private TextView textMilestone;
@@ -81,7 +84,7 @@ public class IssueDetailView extends LinearLayout {
         body = (TextView) findViewById(R.id.textBody);
         labelsLayout = (ViewGroup) findViewById(R.id.labelsLayout);
         View authorView = findViewById(R.id.author);
-        profileIcon = (ImageView) authorView.findViewById(R.id.profileIcon);
+        profileIcon = (UserAvatarView) authorView.findViewById(R.id.profileIcon);
         profileName = (TextView) authorView.findViewById(R.id.name);
         profileEmail = (TextView) authorView.findViewById(R.id.email);
         textMilestone = (TextView) findViewById(R.id.textMilestone);
@@ -97,8 +100,8 @@ public class IssueDetailView extends LinearLayout {
             if (issue.user != null) {
                 profileName.setText(issue.user.login);
                 profileEmail.setText(TimeUtils.getTimeAgoString(issue.created_at));
-                ImageLoader instance = ImageLoader.getInstance();
-                instance.displayImage(issue.user.avatar_url, profileIcon);
+
+                profileIcon.setUser(issue.user);
                 OnClickListener issueUserClick = new OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -121,7 +124,7 @@ public class IssueDetailView extends LinearLayout {
                 body.setMovementMethod(UiUtils.CHECKING_LINK_METHOD);
             } else {
                 body.setText(Html.fromHtml("<i>" + getResources().getString(R.string.no_description_provided) + "</i>"));
-                body.setTextColor(getResources().getColor(R.color.gray_github_medium));
+                body.setTextColor(AttributesUtils.getIconsColor(getContext()));
             }
 
             if (issue.labels != null && issue.labels.size() > 0) {
@@ -147,7 +150,9 @@ public class IssueDetailView extends LinearLayout {
             if (textMilestone != null) {
                 Milestone milestone = issue.milestone;
                 if (milestone != null) {
-                    textMilestone.setCompoundDrawables(new IconicsDrawable(getContext(), Octicons.Icon.oct_milestone).actionBar().paddingDp(8).colorRes(getColorIcons()), null, null, null);
+                    textMilestone.setCompoundDrawables(
+                            getIcon(Octicons.Icon.oct_milestone), null, null,
+                            null);
                     textMilestone.setText(milestone.title);
                     textMilestone.setVisibility(View.VISIBLE);
                 } else {
@@ -158,7 +163,9 @@ public class IssueDetailView extends LinearLayout {
             if (textAssignee != null) {
                 final User assignee = issue.assignee;
                 if (assignee != null) {
-                    textAssignee.setCompoundDrawables(new IconicsDrawable(getContext(), Octicons.Icon.oct_person).actionBar().colorRes(getColorIcons()).paddingDp(8), null, null, null);
+                    textAssignee.setCompoundDrawables(
+                            getIcon(Octicons.Icon.oct_person), null, null,
+                            null);
                     textAssignee.setText(assignee.login);
                     textMilestone.setVisibility(View.VISIBLE);
                     textAssignee.setOnClickListener(new OnClickListener() {
@@ -176,7 +183,9 @@ public class IssueDetailView extends LinearLayout {
             if (textRepository != null) {
                 final Repo repo = issue.repository;
                 if (repo != null) {
-                    textRepository.setCompoundDrawables(new IconicsDrawable(getContext(), Octicons.Icon.oct_repo).actionBar().colorRes(getColorIcons()).paddingDp(8), null, null, null);
+                    textRepository.setCompoundDrawables(
+                            getIcon(Octicons.Icon.oct_repo), null, null,
+                            null);
                     textRepository.setText(repo.full_name);
                     textRepository.setVisibility(View.VISIBLE);
                     textRepository.setOnClickListener(new OnClickListener() {
@@ -203,7 +212,7 @@ public class IssueDetailView extends LinearLayout {
                     if (issueDetailRequestListener != null) {
                         if (v.getId() == R.id.textTitle) {
                             issueDetailRequestListener.onTitleEditRequest();
-                        } else if (v.getId() == R.id.textBody){
+                        } else if (v.getId() == R.id.textBody) {
                             issueDetailRequestListener.onContentEditRequest();
                         }
                     }
@@ -213,6 +222,10 @@ public class IssueDetailView extends LinearLayout {
             title.setOnClickListener(editClickListener);
             body.setOnClickListener(editClickListener);
         }
+    }
+
+    private IconicsDrawable getIcon(IIcon icon) {
+        return new IconicsDrawable(getContext(), icon).actionBar().colorRes(getColorIcons());
     }
 
     public int getColorIcons() {

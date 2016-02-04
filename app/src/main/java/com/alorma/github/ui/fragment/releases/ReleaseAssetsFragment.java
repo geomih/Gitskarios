@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -38,13 +39,12 @@ public class ReleaseAssetsFragment extends BaseFragment implements ReleaseAssets
         ReleaseAssetsFragment releaseAssetsFragment = new ReleaseAssetsFragment();
 
         Bundle args = new Bundle();
-        args.putParcelableArrayList(RELEASE_ASSETS, new ArrayList<>(releaseAssets));
+        args.putParcelableArrayList(RELEASE_ASSETS, new ArrayList<Parcelable>(releaseAssets));
 
         releaseAssetsFragment.setArguments(args);
 
         return releaseAssetsFragment;
     }
-
 
     @Nullable
     @Override
@@ -59,12 +59,12 @@ public class ReleaseAssetsFragment extends BaseFragment implements ReleaseAssets
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        ArrayList<ReleaseAsset> assets = getArguments().getParcelableArrayList(RELEASE_ASSETS);
+        List<ReleaseAsset> assets = getArguments().getParcelableArrayList(RELEASE_ASSETS);
 
         if (assets != null) {
-            RVRendererAdapter<ReleaseAsset> adapter = new RVRendererAdapter<>(LayoutInflater.from(getActivity()),
-                    new ReleaseAssetRendererBuilder(this),
-                    new ListAdapteeCollection<>(assets));
+            RVRendererAdapter<ReleaseAsset> adapter =
+                    new RVRendererAdapter<>(LayoutInflater.from(getActivity()), new ReleaseAssetRendererBuilder(this),
+                            new ListAdapteeCollection<>(assets));
 
             recyclerView.setAdapter(adapter);
         }
@@ -77,8 +77,7 @@ public class ReleaseAssetsFragment extends BaseFragment implements ReleaseAssets
 
     private void downloadFile(Context context, ReleaseAsset asset) {
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        DownloadManager.Request request = new DownloadManager.Request(
-                Uri.parse(asset.browser_download_url));
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(asset.browser_download_url));
 
         String fileName = asset.name;
         request.setTitle(fileName);

@@ -10,13 +10,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:transitionName="avatar"/>
+        android:transitionName="avatar" />
 
     <LinearLayout
+        android:id="@+id/textRootView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:id="@+id/textRootView"
         android:background="@color/gray_github_medium">
 
         <TextView

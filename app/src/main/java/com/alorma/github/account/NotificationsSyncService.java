@@ -8,10 +8,10 @@ import android.os.IBinder;
  * Created by Bernat on 07/06/2015.
  */
 public class NotificationsSyncService extends Service {
-    // Storage for an instance of the sync adapter
-    private static NotificationsSyncAdapter sSyncAdapter = null;
     // Object to use as a thread-safe lock
     private static final Object sSyncAdapterLock = new Object();
+    // Storage for an instance of the sync adapter
+    private static NotificationsSyncAdapter sSyncAdapter = null;
 
     /*
      * Instantiate the sync adapter object.

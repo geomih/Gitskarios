@@ -10,11 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.alorma.github.R;
 import com.alorma.github.emoji.Emoji;
-import com.alorma.github.emoji.EmojisActivity;
 import com.alorma.github.emoji.EmojisAdapter;
 import com.alorma.github.emoji.EmojisFragment;
 

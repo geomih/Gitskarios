@@ -4,24 +4,26 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 
 import com.alorma.github.R;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.alorma.github.sdk.bean.dto.response.GithubStatus;
 import com.alorma.github.sdk.bean.dto.response.GithubStatusResponse;
 import com.alorma.github.sdk.bean.info.CommitInfo;
 import com.alorma.github.sdk.services.repo.GetShaCombinedStatus;
 import com.alorma.github.ui.adapter.commit.GithubStatusAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by a557114 on 06/09/2015.
  */
-public class CommitStatusFragment extends PaginatedListFragment<List<GithubStatus>, GithubStatusAdapter> {
+public class CommitStatusFragment extends LoadingListFragment<GithubStatusAdapter> {
 
     public static final String COMMIT_INFO = "COMMIT_INFO";
     private CommitInfo commitInfo;
@@ -41,46 +43,37 @@ public class CommitStatusFragment extends PaginatedListFragment<List<GithubStatu
     @Override
     protected void executeRequest() {
         super.executeRequest();
-        GetShaCombinedStatus getShaCombinedStatus = new GetShaCombinedStatus(getActivity(), commitInfo.repoInfo, commitInfo.sha);
-        getShaCombinedStatus.setOnResultCallback(new StatusCallback(this));
-        getShaCombinedStatus.execute();
+        GetShaCombinedStatus getShaCombinedStatus = new GetShaCombinedStatus(commitInfo.repoInfo, commitInfo.sha);
+        getShaCombinedStatus.observable().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Func1<Pair<GithubStatusResponse, Integer>, GithubStatusResponse>() {
+                    @Override
+                    public GithubStatusResponse call(Pair<GithubStatusResponse, Integer> githubStatusResponseIntegerPair) {
+                        return githubStatusResponseIntegerPair.first;
+                    }
+                })
+                .subscribe(new StatusCallback());
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
-        GetShaCombinedStatus getShaCombinedStatus = new GetShaCombinedStatus(getActivity(), commitInfo.repoInfo, commitInfo.sha, page);
-        getShaCombinedStatus.setOnResultCallback(new StatusCallback(this));
-        getShaCombinedStatus.execute();
+        GetShaCombinedStatus getShaCombinedStatus = new GetShaCombinedStatus(commitInfo.repoInfo, commitInfo.sha, page);
+        getShaCombinedStatus.observable().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Func1<Pair<GithubStatusResponse, Integer>, GithubStatusResponse>() {
+                    @Override
+                    public GithubStatusResponse call(Pair<GithubStatusResponse, Integer> githubStatusResponseIntegerPair) {
+                        return githubStatusResponseIntegerPair.first;
+                    }
+                })
+                .subscribe(new StatusCallback());
     }
 
-    @Override
-    protected void onResponse(List<GithubStatus> githubStatuses, boolean refreshing) {
-        if (githubStatuses.size() > 0) {
-            hideEmpty();
-            if (getAdapter() != null) {
-                getAdapter().addAll(githubStatuses);
-            } else {
-                GithubStatusAdapter adapter = new GithubStatusAdapter(LayoutInflater.from(getActivity()));
-                adapter.addAll(githubStatuses);
-                setAdapter(adapter);
-            }
-        } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
-        }
-    }
-
-    @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
-        if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(true);
-        }
-    }
     @Override
     protected void loadArguments() {
         if (getArguments() != null) {
-            commitInfo = getArguments().getParcelable(COMMIT_INFO);
+            commitInfo = (CommitInfo) getArguments().getParcelable(COMMIT_INFO);
         }
     }
 
@@ -94,24 +87,38 @@ public class CommitStatusFragment extends PaginatedListFragment<List<GithubStatu
         return R.string.no_status;
     }
 
-    private class StatusCallback implements BaseClient.OnResultCallback<GithubStatusResponse> {
-        private BaseClient.OnResultCallback<List<GithubStatus>> callback;
+    private class StatusCallback extends Subscriber<GithubStatusResponse> {
 
-        public StatusCallback(BaseClient.OnResultCallback<List<GithubStatus>> callback) {
-            this.callback = callback;
+        public StatusCallback() {
+
         }
 
         @Override
-        public void onResponseOk(GithubStatusResponse githubStatusResponse, Response r) {
-            if (callback != null) {
-                callback.onResponseOk(githubStatusResponse.statuses, r);
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+                setEmpty();
             }
         }
 
         @Override
-        public void onFail(RetrofitError error) {
-            if (callback != null) {
-                callback.onFail(error);
+        public void onNext(GithubStatusResponse githubStatuses) {
+            List<GithubStatus> statuses = githubStatuses.statuses;
+            if (statuses != null && statuses.size() > 0) {
+                hideEmpty();
+                if (getAdapter() != null) {
+                    getAdapter().addAll(statuses);
+                } else {
+                    GithubStatusAdapter adapter = new GithubStatusAdapter(LayoutInflater.from(getActivity()));
+                    adapter.addAll(statuses);
+                    setAdapter(adapter);
+                }
+            } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+                setEmpty();
             }
         }
     }

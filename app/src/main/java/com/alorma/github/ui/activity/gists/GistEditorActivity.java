@@ -10,21 +10,9 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.GistFile;
@@ -36,9 +24,8 @@ import com.alorma.github.ui.activity.base.BackActivity;
  */
 public class GistEditorActivity extends BackActivity {
 
-    private static final String EXTRA_LANGUAGE = "EXTRA_LANGUAGE";
     public static final String EXTRA_FILE = "EXTRA_FILE";
-
+    private static final String EXTRA_LANGUAGE = "EXTRA_LANGUAGE";
     private static final int LANGUAGE_REQUEST = 854;
 
     private EditText editTitle;
@@ -136,19 +123,18 @@ public class GistEditorActivity extends BackActivity {
         builder.negativeText(R.string.cancel);
         builder.neutralText(R.string.gist_editor_add_file_action);
         builder.callback(new MaterialDialog.ButtonCallback() {
-                             @Override
-                             public void onPositive(MaterialDialog dialog) {
-                                 super.onPositive(dialog);
-                                 finish();
-                             }
+            @Override
+            public void onPositive(MaterialDialog dialog) {
+                super.onPositive(dialog);
+                finish();
+            }
 
-                             @Override
-                             public void onNeutral(MaterialDialog dialog) {
-                                 super.onNeutral(dialog);
-                                 endGistFile();
-                             }
-                         }
-        );
+            @Override
+            public void onNeutral(MaterialDialog dialog) {
+                super.onNeutral(dialog);
+                endGistFile();
+            }
+        });
         builder.show();
     }
 

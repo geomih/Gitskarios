@@ -55,7 +55,6 @@ public class GeneralReposFragment extends BaseFragment {
                 }
             });
         }
-
     }
 
     @Override

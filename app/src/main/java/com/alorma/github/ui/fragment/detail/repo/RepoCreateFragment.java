@@ -21,13 +21,10 @@ import com.alorma.github.ui.popup.GitIgnorePopup;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
-import retrofit.RetrofitError;
-
 /**
  * Created by Bernat on 28/09/2014.
  */
 public class RepoCreateFragment extends Fragment implements View.OnClickListener, GitIgnorePopup.OnGitIgnoresListener {
-
 
     private CheckedTextView repoPrivateCheck;
     private CheckedTextView repoIssuesCheck;
@@ -63,7 +60,6 @@ public class RepoCreateFragment extends Fragment implements View.OnClickListener
         super.onViewCreated(view, savedInstanceState);
 
         findViews(view);
-
     }
 
     private void findViews(View view) {
@@ -108,7 +104,6 @@ public class RepoCreateFragment extends Fragment implements View.OnClickListener
             iconDrawable.actionBarSize();
             itemSend.setIcon(iconDrawable);
         }
-
     }
 
     @Override
@@ -139,7 +134,6 @@ public class RepoCreateFragment extends Fragment implements View.OnClickListener
         repoRequestDTO.has_issues = hasIssues;
         repoRequestDTO.has_wiki = hasWiki;
         repoRequestDTO.has_downloads = hasDownloads;
-
     }
 
     @Override
@@ -206,7 +200,7 @@ public class RepoCreateFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public void onGitIgnoreFailed(RetrofitError error) {
+    public void onGitIgnoreFailed(Throwable error) {
         buttonAddGitignore.setEnabled(true);
     }
 

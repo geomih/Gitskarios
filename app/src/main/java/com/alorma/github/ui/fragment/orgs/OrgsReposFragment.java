@@ -4,14 +4,13 @@ import android.os.Bundle;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.services.orgs.OrgsReposClient;
-import com.alorma.github.sdk.services.repos.GithubReposClient;
 import com.alorma.github.ui.fragment.repos.BaseReposListFragment;
+import com.alorma.github.utils.RepoUtils;
 
 public class OrgsReposFragment extends BaseReposListFragment {
 
-    private String org;
-
     private static final String ORGANIZATION = "ORG";
+    private String org;
 
     public static OrgsReposFragment newInstance() {
         return new OrgsReposFragment();
@@ -44,23 +43,17 @@ public class OrgsReposFragment extends BaseReposListFragment {
     @Override
     protected void executeRequest() {
         super.executeRequest();
-        GithubReposClient client = new OrgsReposClient(getActivity(), org);
-
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new OrgsReposClient(org, RepoUtils.sortOrder(getActivity())));
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
-        OrgsReposClient client = new OrgsReposClient(getActivity(), org, page);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new OrgsReposClient(org, RepoUtils.sortOrder(getActivity()), page));
     }
 
     @Override
     protected int getNoDataText() {
         return R.string.no_repositories;
     }
-
 }

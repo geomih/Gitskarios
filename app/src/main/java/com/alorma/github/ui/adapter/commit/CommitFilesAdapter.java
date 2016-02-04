@@ -29,7 +29,7 @@ public class CommitFilesAdapter extends RecyclerArrayAdapter<CommitFile, CommitF
 
     @Override
     public FileVH onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new FileVH(getInflater().inflate(R.layout.commit_file_row, parent, false));
+        return new FileVH(getInflater().inflate(R.layout.row_commit_file, parent, false));
     }
 
     @Override
@@ -77,9 +77,12 @@ public class CommitFilesAdapter extends RecyclerArrayAdapter<CommitFile, CommitF
         textContent.setText(content);
     }
 
-
     public void setOnFileRequestListener(OnFileRequestListener onFileRequestListener) {
         this.onFileRequestListener = onFileRequestListener;
+    }
+
+    public interface OnFileRequestListener {
+        void onFileRequest(CommitFile file);
     }
 
     public class FileVH extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -102,9 +105,5 @@ public class CommitFilesAdapter extends RecyclerArrayAdapter<CommitFile, CommitF
                 onFileRequestListener.onFileRequest(getItem(getAdapterPosition()));
             }
         }
-    }
-
-    public interface OnFileRequestListener {
-        void onFileRequest(CommitFile file);
     }
 }

@@ -19,7 +19,6 @@ import com.alorma.github.sdk.bean.dto.response.CommitFile;
 import com.alorma.github.sdk.bean.info.CommitInfo;
 import com.alorma.github.ui.adapter.commit.CommitFilesAdapter;
 import com.alorma.github.ui.fragment.base.BaseFragment;
-import com.alorma.gitskarios.core.client.BaseClient;
 
 import java.util.List;
 
@@ -52,7 +51,7 @@ public class CommitFilesFragment extends BaseFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (getArguments() != null) {
-            info = getArguments().getParcelable(INFO);
+            info = (CommitInfo) getArguments().getParcelable(INFO);
 
             recyclerView = (RecyclerView) view.findViewById(R.id.recycler);
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));

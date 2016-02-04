@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.services.repos.WatchedReposClient;
+import com.alorma.github.utils.RepoUtils;
 
 public class WatchedReposFragment extends BaseReposListFragment {
 
@@ -25,35 +26,28 @@ public class WatchedReposFragment extends BaseReposListFragment {
     }
 
     @Override
-    protected void executeRequest() {
-        super.executeRequest();
-        WatchedReposClient client;
-
+    protected void loadArguments() {
         if (getArguments() != null) {
             username = getArguments().getString(USERNAME);
         }
+    }
 
-        client = new WatchedReposClient(getActivity(), username);
+    @Override
+    protected void executeRequest() {
+        super.executeRequest();
+        loadArguments();
 
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new WatchedReposClient(username, RepoUtils.sortOrder(getActivity())));
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
-        WatchedReposClient client = new WatchedReposClient(getActivity(), username, page);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new WatchedReposClient(username, RepoUtils.sortOrder(getActivity()), page));
     }
 
     @Override
     protected int getNoDataText() {
         return R.string.no_watched_repositories;
-    }
-
-    @Override
-    protected void loadArguments() {
-
     }
 }

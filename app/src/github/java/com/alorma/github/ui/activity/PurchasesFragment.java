@@ -12,13 +12,15 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.widget.Toast;
+
 import com.android.vending.billing.IInAppBillingService;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Created by bernat.borras on 24/10/15.
@@ -35,8 +37,7 @@ public class PurchasesFragment extends Fragment {
         }
 
         @Override
-        public void onServiceConnected(ComponentName name,
-            IBinder service) {
+        public void onServiceConnected(ComponentName name, IBinder service) {
             mService = IInAppBillingService.Stub.asInterface(service);
         }
     };
@@ -76,8 +77,7 @@ public class PurchasesFragment extends Fragment {
                     String developerPayload = jo.getString("developerPayload");
                     if (callback != null) {
                         boolean purchased = developerPayload.equals(purchaseId) && SKU_MULTI_ACCOUNT.equals(sku);
-                        callback.onMultiAccountPurchaseResult(
-                            purchased);
+                        callback.onMultiAccountPurchaseResult(purchased);
                     }
                 } catch (JSONException e) {
 
@@ -92,19 +92,36 @@ public class PurchasesFragment extends Fragment {
         }
     }
 
+    public void showDialogBuyMultiAccount() {
+        try {
+            purchaseId = UUID.randomUUID().toString();
+            Bundle buyIntentBundle = mService.getBuyIntent(3, getActivity().getPackageName(), SKU_MULTI_ACCOUNT, "inapp", purchaseId);
+            PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+            getActivity().startIntentSenderForResult(pendingIntent.getIntentSender(), 1001, new Intent(), 0, 0, 0);
+        } catch (RemoteException | IntentSender.SendIntentException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public interface PurchasesCallback {
+        void onMultiAccountPurchaseResult(boolean multiAccountPurchased);
+    }
+
     private class SKUTask extends AsyncTask<String, Void, Bundle> {
 
         @Override
         protected Bundle doInBackground(String... strings) {
-            ArrayList<String> skuList = new ArrayList<>();
-            Collections.addAll(skuList, strings);
-            Bundle querySkus = new Bundle();
-            querySkus.putStringArrayList("ITEM_ID_LIST", skuList);
+            if (strings != null) {
+                ArrayList<String> skuList = new ArrayList<>();
+                Collections.addAll(skuList, strings);
+                Bundle querySkus = new Bundle();
+                querySkus.putStringArrayList("ITEM_ID_LIST", skuList);
 
-            try {
-                return mService.getPurchases(3, getActivity().getPackageName(), "inapp", null);
-            } catch (RemoteException e) {
-                e.printStackTrace();
+                try {
+                    return mService.getPurchases(3, getActivity().getPackageName(), "inapp", null);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
             }
             return null;
         }
@@ -122,22 +139,6 @@ public class PurchasesFragment extends Fragment {
                     }
                 }
             }
-        }
-    }
-
-    public interface PurchasesCallback {
-        void onMultiAccountPurchaseResult(boolean multiAccountPurchased);
-    }
-
-    public void showDialogBuyMultiAccount() {
-        try {
-            purchaseId = UUID.randomUUID().toString();
-            Bundle buyIntentBundle = mService.getBuyIntent(3, getActivity().getPackageName(),
-                SKU_MULTI_ACCOUNT, "inapp", purchaseId);
-            PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-            getActivity().startIntentSenderForResult(pendingIntent.getIntentSender(), 1001, new Intent(), 0, 0, 0);
-        } catch (RemoteException | IntentSender.SendIntentException e) {
-            e.printStackTrace();
         }
     }
 }

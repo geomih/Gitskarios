@@ -28,16 +28,12 @@ public class FollowingFragment extends BaseUsersListFragment {
 
     @Override
     protected void executeRequest() {
-        UserFollowingClient client = new UserFollowingClient(getActivity(), username);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new UserFollowingClient(username));
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
-        UserFollowingClient client = new UserFollowingClient(getActivity(), username, page);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new UserFollowingClient(username, page));
     }
 
     @Override

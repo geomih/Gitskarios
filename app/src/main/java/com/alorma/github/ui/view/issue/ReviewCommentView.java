@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -13,11 +12,11 @@ import com.alorma.github.R;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.bean.issue.IssueStoryDetail;
 import com.alorma.github.sdk.bean.issue.IssueStoryReviewComment;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.utils.TimeUtils;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
 import com.github.mobile.util.HttpImageGetter;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -27,7 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
  */
 public class ReviewCommentView extends LinearLayout {
 
-    private ImageView profileIcon;
+    private UserAvatarView profileIcon;
     private TextView userLogin;
     private TextView createdAt;
     private TextView bodyText;
@@ -56,7 +55,7 @@ public class ReviewCommentView extends LinearLayout {
 
     private void init() {
         inflate(getContext(), R.layout.issue_detail_issue_timeline_review_secondary_view, this);
-        profileIcon = (ImageView) findViewById(R.id.profileIcon);
+        profileIcon = (UserAvatarView) findViewById(R.id.profileIcon);
         userLogin = (TextView) findViewById(R.id.userLogin);
         createdAt = (TextView) findViewById(R.id.createdAt);
         bodyText = (TextView) findViewById(R.id.bodyText);
@@ -77,7 +76,7 @@ public class ReviewCommentView extends LinearLayout {
 
     private void applyGenericIssueStory(IssueStoryDetail storyEvent) {
         userLogin.setText(storyEvent.user().login);
-        ImageLoader.getInstance().displayImage(storyEvent.user().avatar_url, profileIcon);
+        profileIcon.setUser(storyEvent.user());
         setTime(storyEvent.createdAt());
     }
 

@@ -9,11 +9,12 @@ import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.UrlsManager;
-import com.alorma.github.emoji.EmojiBitmapLoader;
 import com.alorma.github.sdk.bean.dto.response.Repo;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
+
+import java.text.DecimalFormat;
 
 public class ReposAdapter extends RecyclerArrayAdapter<Repo, ReposAdapter.ViewHolder> {
 
@@ -39,13 +40,11 @@ public class ReposAdapter extends RecyclerArrayAdapter<Repo, ReposAdapter.ViewHo
             holder.textOwnerName.setText("");
         }
 
-        String starText = holder.itemView.getResources().getString(R.string.star_icon_text, repo.stargazers_count);
         applyIcon(holder.textStarts, Octicons.Icon.oct_star);
-        holder.textStarts.setText(starText);
+        holder.textStarts.setText(new DecimalFormat().format(repo.stargazers_count));
 
-        String forkText = holder.itemView.getResources().getString(R.string.fork_icon_text, repo.forks_count);
         applyIcon(holder.textForks, Octicons.Icon.oct_repo_forked);
-        holder.textForks.setText(forkText);
+        holder.textForks.setText(new DecimalFormat().format(repo.forks_count));
 
         if (repo.description != null) {
             holder.textDescription.setVisibility(View.VISIBLE);
@@ -66,10 +65,18 @@ public class ReposAdapter extends RecyclerArrayAdapter<Repo, ReposAdapter.ViewHo
         notifyDataSetChanged();
     }
 
-
     public void showOwnerNameExtra(boolean showOwnerNameExtra) {
         this.showOwnerNameExtra = showOwnerNameExtra;
         notifyDataSetChanged();
+    }
+
+    private void applyIcon(TextView textView, Octicons.Icon value) {
+        IconicsDrawable drawableForks = new IconicsDrawable(textView.getContext(), value);
+        drawableForks.sizeRes(R.dimen.textSizeSmall);
+        drawableForks.colorRes(R.color.icons);
+        textView.setCompoundDrawables(null, null, drawableForks, null);
+        int offset = textView.getResources().getDimensionPixelOffset(R.dimen.textSizeSmall);
+        textView.setCompoundDrawablePadding(offset);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -100,14 +107,4 @@ public class ReposAdapter extends RecyclerArrayAdapter<Repo, ReposAdapter.ViewHo
             });
         }
     }
-
-    private void applyIcon(TextView textView, Octicons.Icon value) {
-        IconicsDrawable drawableForks = new IconicsDrawable(textView.getContext(), value);
-        drawableForks.sizeRes(R.dimen.textSizeSmall);
-        drawableForks.colorRes(R.color.icons);
-        textView.setCompoundDrawables(null, null, drawableForks, null);
-        int offset = textView.getResources().getDimensionPixelOffset(R.dimen.textSizeSmall);
-        textView.setCompoundDrawablePadding(offset);
-    }
-
 }

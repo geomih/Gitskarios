@@ -5,33 +5,31 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 
 import com.alorma.github.R;
-import com.alorma.github.ui.adapter.viewpager.NavigationPagerAdapter;
-import com.alorma.gitskarios.core.client.BaseClient;
 import com.alorma.github.sdk.bean.dto.response.Release;
 import com.alorma.github.sdk.bean.dto.response.ReleaseAsset;
 import com.alorma.github.sdk.bean.info.ReleaseInfo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.services.repo.GetReleaseClient;
 import com.alorma.github.ui.activity.base.BackActivity;
+import com.alorma.github.ui.adapter.viewpager.NavigationPagerAdapter;
 import com.alorma.github.ui.fragment.releases.ReleaseAboutFragment;
 import com.alorma.github.ui.fragment.releases.ReleaseAssetsFragment;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 22/02/2015.
  */
-public class ReleaseDetailActivity extends BackActivity implements BaseClient.OnResultCallback<Release> {
+public class ReleaseDetailActivity extends BackActivity implements Observer<Release> {
 
     private static final String RELEASE_INFO = "RELEASE_INFO";
     private static final String RELEASE = "RELEASE";
@@ -74,14 +72,13 @@ public class ReleaseDetailActivity extends BackActivity implements BaseClient.On
             viewPager = (ViewPager) findViewById(R.id.pager);
 
             if (getIntent().getExtras().containsKey(RELEASE)) {
-                Release release = getIntent().getExtras().getParcelable(RELEASE);
-                RepoInfo repoInfo = getIntent().getExtras().getParcelable(REPO_INFO);
+                Release release = (Release) getIntent().getExtras().getParcelable(RELEASE);
+                RepoInfo repoInfo = (RepoInfo) getIntent().getExtras().getParcelable(REPO_INFO);
                 showRelease(release, repoInfo);
             } else if (getIntent().getExtras().containsKey(RELEASE_INFO)) {
-                releaseInfo = getIntent().getExtras().getParcelable(RELEASE_INFO);
-                GetReleaseClient releaseClient = new GetReleaseClient(this, releaseInfo);
-                releaseClient.setOnResultCallback(this);
-                releaseClient.execute();
+                releaseInfo = (ReleaseInfo) getIntent().getExtras().getParcelable(RELEASE_INFO);
+                GetReleaseClient releaseClient = new GetReleaseClient(releaseInfo);
+                releaseClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(this);
             }
         }
     }
@@ -123,12 +120,17 @@ public class ReleaseDetailActivity extends BackActivity implements BaseClient.On
     }
 
     @Override
-    public void onResponseOk(Release release, Response r) {
+    public void onNext(Release release) {
         showRelease(release, releaseInfo.repoInfo);
     }
 
     @Override
-    public void onFail(RetrofitError error) {
+    public void onError(Throwable error) {
+
+    }
+
+    @Override
+    public void onCompleted() {
 
     }
 }

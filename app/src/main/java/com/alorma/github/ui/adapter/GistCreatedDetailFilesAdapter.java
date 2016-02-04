@@ -13,9 +13,6 @@ import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.GistFile;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by Bernat on 02/04/2015.
  */
@@ -50,6 +47,12 @@ public class GistCreatedDetailFilesAdapter extends RecyclerArrayAdapter<GistFile
                 notifyItemChanged(editingPosition);
             }
         }
+    }
+
+    public interface GistCreateAdapterListener {
+        void updateFile(int position, GistFile gistFile);
+
+        void removeFile(int position, GistFile item);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -102,11 +105,5 @@ public class GistCreatedDetailFilesAdapter extends RecyclerArrayAdapter<GistFile
                 return false;
             }
         }
-    }
-
-    public interface GistCreateAdapterListener {
-        void updateFile(int position, GistFile gistFile);
-
-        void removeFile(int position, GistFile item);
     }
 }

@@ -21,17 +21,17 @@ import com.alorma.github.sdk.services.gists.GetGistDetailClient;
 import com.alorma.github.ui.activity.gists.CreateGistActivity;
 import com.alorma.github.ui.activity.gists.GistsFileActivity;
 import com.alorma.github.ui.adapter.GistDetailFilesAdapter;
-import com.alorma.gitskarios.core.client.BaseClient;
 
 import java.util.ArrayList;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 02/04/2015.
  */
-public class GistDetailFragment extends Fragment implements BaseClient.OnResultCallback<Gist>, GistDetailFilesAdapter.GistFilesAdapterListener {
+public class GistDetailFragment extends Fragment implements Observer<Gist>, GistDetailFilesAdapter.GistFilesAdapterListener {
 
     public static final String GIST_ID = "GIST_ID";
     private RecyclerView recyclerView;
@@ -59,7 +59,8 @@ public class GistDetailFragment extends Fragment implements BaseClient.OnResultC
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler);
-        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(getResources().getInteger(R.integer.gist_files_count), StaggeredGridLayoutManager.VERTICAL));
+        recyclerView.setLayoutManager(
+                new StaggeredGridLayoutManager(getResources().getInteger(R.integer.gist_files_count), StaggeredGridLayoutManager.VERTICAL));
 
         adapter = new GistDetailFilesAdapter(getActivity());
         adapter.setGistFilesAdapterListener(this);
@@ -68,19 +69,28 @@ public class GistDetailFragment extends Fragment implements BaseClient.OnResultC
         if (getArguments() != null) {
             String id = getArguments().getString(GIST_ID);
 
-            GetGistDetailClient detailClient = new GetGistDetailClient(getActivity(), id);
-            detailClient.setOnResultCallback(this);
-            detailClient.execute();
+            GetGistDetailClient detailClient = new GetGistDetailClient(id);
+            detailClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(this);
         }
     }
 
     @Override
-    public void onResponseOk(Gist gist, Response r) {
+    public void onNext(Gist gist) {
         this.gist = gist;
         if (gistDetailListener != null) {
             gistDetailListener.onGistLoaded(gist);
         }
         adapter.addAll(new ArrayList<GistFile>(gist.files.values()));
+    }
+
+    @Override
+    public void onError(Throwable e) {
+
+    }
+
+    @Override
+    public void onCompleted() {
+
     }
 
     public int getMenuId() {
@@ -95,10 +105,14 @@ public class GistDetailFragment extends Fragment implements BaseClient.OnResultC
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_gist_share) {
+        if (item != null && item.getItemId() == R.id.action_gist_share) {
             Uri uri = Uri.parse(gist.html_url);
             String owner = gist.user.login;
-            Uri newUri = new Uri.Builder().scheme(uri.getScheme()).authority(uri.getAuthority()).appendPath(owner).appendPath(uri.getLastPathSegment()).build();
+            Uri newUri = new Uri.Builder().scheme(uri.getScheme())
+                    .authority(uri.getAuthority())
+                    .appendPath(owner)
+                    .appendPath(uri.getLastPathSegment())
+                    .build();
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
             intent.putExtra(Intent.EXTRA_TEXT, newUri.toString());
@@ -121,11 +135,6 @@ public class GistDetailFragment extends Fragment implements BaseClient.OnResultC
 
         ComponentName componentName = new ComponentName(getActivity(), CreateGistActivity.class);
         getActivity().getPackageManager().setComponentEnabledSetting(componentName, flag, PackageManager.DONT_KILL_APP);
-    }
-
-    @Override
-    public void onFail(RetrofitError error) {
-
     }
 
     public void setGistDetailListener(GistDetailListener gistDetailListener) {

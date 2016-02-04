@@ -11,7 +11,7 @@ import com.alorma.github.ui.fragment.ShowEmojisFragment;
 /**
  * Created by Bernat on 08/07/2015.
  */
-public class EmojisActivity extends BackActivity implements EmojisAdapter.OnEmojiSelectedListener{
+public class EmojisActivity extends BackActivity implements EmojisAdapter.OnEmojiSelectedListener {
 
     public static final String EMOJI = "EMOJI";
 

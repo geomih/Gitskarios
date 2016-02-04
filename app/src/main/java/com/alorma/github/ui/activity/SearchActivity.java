@@ -2,18 +2,16 @@ package com.alorma.github.ui.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -23,12 +21,19 @@ import com.alorma.github.ui.activity.base.BackActivity;
 import com.alorma.github.ui.adapter.viewpager.NavigationPagerAdapter;
 import com.alorma.github.ui.fragment.search.SearchReposFragment;
 import com.alorma.github.ui.fragment.search.SearchUsersFragment;
-import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.github.utils.AttributesUtils;
+import com.jakewharton.rxbinding.widget.RxTextView;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import rx.Subscriber;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
 
 /**
  * Created by Bernat on 31/01/2015.
@@ -39,6 +44,7 @@ public class SearchActivity extends BackActivity {
     private SearchReposFragment searchReposFragment;
     private SearchUsersFragment searchUsersFragment;
     private String lastQuery;
+    private Subscription subscription;
 
     public static Intent launchIntent(Context context) {
         return new Intent(context, SearchActivity.class);
@@ -65,7 +71,7 @@ public class SearchActivity extends BackActivity {
         listFragments.add(searchUsersFragment);
 
         viewPager.setAdapter(
-            new NavigationPagerAdapter(getSupportFragmentManager(), getResources(), listFragments));
+                new NavigationPagerAdapter(getSupportFragmentManager(), getResources(), listFragments));
         tabLayout.setupWithViewPager(viewPager);
 
         searchView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -87,6 +93,40 @@ public class SearchActivity extends BackActivity {
                 return false;
             }
         });
+
+        subscription = RxTextView.textChanges(searchView)
+                .filter(new Func1<CharSequence, Boolean>() {
+                    @Override
+                    public Boolean call(CharSequence s) {
+                        return s.length() >= 3;
+                    }
+                })
+                .throttleLast(100, TimeUnit.MILLISECONDS)
+                .debounce(250, TimeUnit.MILLISECONDS)
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<CharSequence>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(CharSequence charSequence) {
+                        search(charSequence.toString());
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        subscription.unsubscribe();
+        super.onDestroy();
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -97,7 +137,9 @@ public class SearchActivity extends BackActivity {
 
             MenuItem searchItem = menu.findItem(R.id.action_search);
 
-            IconicsDrawable searchIcon = new IconicsDrawable(getApplicationContext(), Octicons.Icon.oct_search).actionBar().colorRes(R.color.gray_github_medium);
+            IconicsDrawable searchIcon =
+                    new IconicsDrawable(getApplicationContext(), Octicons.Icon.oct_search)
+                            .actionBar().color(AttributesUtils.getIconsColor(this));
 
             searchItem.setIcon(searchIcon);
         }
@@ -135,4 +177,12 @@ public class SearchActivity extends BackActivity {
         finish();
     }
 
+    @Override
+    protected void configureTheme() {
+        SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String pref_theme = defaultSharedPreferences.getString("pref_theme", getString(R.string.theme_light));
+        if ("theme_dark".equalsIgnoreCase(pref_theme)) {
+            setTheme(R.style.AppTheme_Dark_Search);
+        }
+    }
 }

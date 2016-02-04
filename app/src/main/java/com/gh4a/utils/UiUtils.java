@@ -20,8 +20,7 @@ import java.util.List;
 public class UiUtils {
     public static final LinkMovementMethod CHECKING_LINK_METHOD2 = new LinkMovementMethod() {
         @Override
-        public boolean onTouchEvent(@NonNull TextView widget,
-                                    @NonNull Spannable buffer, @NonNull MotionEvent event) {
+        public boolean onTouchEvent(@NonNull TextView widget, @NonNull Spannable buffer, @NonNull MotionEvent event) {
             try {
                 return super.onTouchEvent(widget, buffer, event);
             } catch (ActivityNotFoundException e) {

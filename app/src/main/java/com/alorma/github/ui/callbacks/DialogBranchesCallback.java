@@ -6,15 +6,10 @@ import android.view.View;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.sdk.services.repo.BranchesCallback;
-import com.alorma.github.ui.ErrorHandler;
-
-import retrofit.RetrofitError;
 
 public abstract class DialogBranchesCallback extends BranchesCallback implements MaterialDialog.ListCallbackSingleChoice {
 
-
     private Context context;
-    private String[] branches;
 
     public DialogBranchesCallback(Context context, RepoInfo repoInfo) {
         super(repoInfo);
@@ -23,7 +18,6 @@ public abstract class DialogBranchesCallback extends BranchesCallback implements
 
     @Override
     protected void showBranches(String[] branches, int defaultBranchPosition) {
-        this.branches = branches;
         if (branches != null) {
             if (branches.length > 1) {
                 MaterialDialog.Builder builder = new MaterialDialog.Builder(context);
@@ -44,16 +38,11 @@ public abstract class DialogBranchesCallback extends BranchesCallback implements
     @Override
     public boolean onSelection(MaterialDialog materialDialog, View view, int i, CharSequence charSequence) {
         materialDialog.dismiss();
-        onBranchSelected(branches[i]);
+        onBranchSelected(charSequence.toString());
         return true;
     }
 
     protected abstract void onBranchSelected(String branch);
-
-    @Override
-    public void onFail(RetrofitError error) {
-        ErrorHandler.onError(context, "Branches callback", error);
-    }
 
     public Context getContext() {
         return context;

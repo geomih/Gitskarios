@@ -1,10 +1,13 @@
 package com.alorma.github.ui.adapter;
 
 import android.content.Context;
-import android.content.Intent;
+import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,8 +18,6 @@ import android.widget.TextView;
 import com.alorma.github.R;
 import com.alorma.github.bean.NotificationsParent;
 import com.alorma.github.sdk.bean.dto.response.Notification;
-import com.alorma.github.sdk.bean.info.RepoInfo;
-import com.alorma.github.ui.activity.RepoDetailActivity;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
 import com.alorma.github.utils.AttributesUtils;
 import com.mikepenz.iconics.IconicsDrawable;
@@ -35,7 +36,8 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
 
         iconDrawable = new IconicsDrawable(context, Octicons.Icon.oct_check);
         iconDrawable.sizeDp(14);
-        iconDrawable.color(AttributesUtils.getSecondaryTextColor(context));
+
+        iconDrawable.color(AttributesUtils.getIconsColor(context));
     }
 
     @Override
@@ -60,12 +62,7 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
         String type = noti.subject.type;
         String title = noti.subject.title;
         StringBuilder msgBuilder = new StringBuilder();
-        msgBuilder.append("<b>")
-                .append("[")
-                .append(type)
-                .append("] ")
-                .append("</b>")
-                .append(title);
+        msgBuilder.append("<b>").append("[").append(type).append("] ").append("</b>").append(title);
         name.setText(Html.fromHtml(msgBuilder.toString()));
 
         name.setOnClickListener(new View.OnClickListener() {
@@ -87,6 +84,22 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
                 popupMenu.show();
             }
         });
+    }
+
+    public void setNotificationsAdapterListener(NotificationsAdapterListener notificationsAdapterListener) {
+        this.notificationsAdapterListener = notificationsAdapterListener;
+    }
+
+    public interface NotificationsAdapterListener {
+        void onNotificationClick(Notification notification);
+
+        void clearNotifications(Notification notification);
+
+        void unsubscribeThreadNotification(Notification notification);
+
+        void requestRepo(NotificationsParent item);
+
+        void clearRepoNotifications(NotificationsParent item);
     }
 
     private class MenuListener implements PopupMenu.OnMenuItemClickListener {
@@ -111,14 +124,9 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
                         notificationsAdapterListener.clearNotifications(notification);
                     }
                     break;
-
             }
             return true;
         }
-    }
-
-    public void setNotificationsAdapterListener(NotificationsAdapterListener notificationsAdapterListener) {
-        this.notificationsAdapterListener = notificationsAdapterListener;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -132,7 +140,6 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
             text_repo = (TextView) itemView.findViewById(R.id.text_repo);
             clear_all_repo = (ImageView) itemView.findViewById(R.id.clear_all_repo);
             notificationsPlaceHolder = (ViewGroup) itemView.findViewById(R.id.notificationsPlaceHolder);
-
 
             text_repo.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -154,17 +161,5 @@ public class NotificationsAdapter extends RecyclerArrayAdapter<NotificationsPare
                 }
             });
         }
-    }
-
-    public interface NotificationsAdapterListener {
-        void onNotificationClick(Notification notification);
-
-        void clearNotifications(Notification notification);
-
-        void unsubscribeThreadNotification(Notification notification);
-
-        void requestRepo(NotificationsParent item);
-
-        void clearRepoNotifications(NotificationsParent item);
     }
 }

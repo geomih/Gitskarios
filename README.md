@@ -8,11 +8,24 @@
 
 [![Join the telegram channel](https://img.shields.io/badge/TELEGRAM%20CHANNEL-Gitskarios-blue.svg)](https://telegram.me/gitskarios)
 
-[![Get it on Google Play](https://developer.android.com/images/brand/en_generic_rgb_wo_45.png)](https://play.google.com/store/apps/details?id=com.alorma.github&utm_source=github&utm_medium=github&utm_campaign=github)
+[![Join SLACK](https://img.shields.io/badge/JOIN-SLACK-orange.svg)](https://gh-apps.slack.com/)
+
+[Get it on Google Play](https://play.google.com/store/apps/details?id=com.alorma.github&utm_source=github&utm_medium=github&utm_campaign=github)
 
 # README #
 
 Gitskarios is an Android Application that allows you to access GitHub, see your profile, search people, star repositories, and more!
+
+## TOKEN
+
+```
+TokenProvider.setTokenProviderInstance(new TokenProviderInterface() {
+    @Override
+    public String getToken() {
+            return ...;
+        }
+    });
+```
 
 ## CONTRIBUTING ##
 
@@ -22,7 +35,7 @@ Follow the instructions that describe how to fork this project : [Fork this proj
 
 The MIT License (MIT)
 
-Copyright (c) 2015 Bernat Borrás Paronella
+Copyright (c) 2016 Bernat Borrás Paronella
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

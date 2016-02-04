@@ -1,47 +1,62 @@
 package com.alorma.github.ui.fragment.repos;
 
 import android.content.SharedPreferences;
+import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 
+import com.alorma.github.GitskariosSettings;
+import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Repo;
-import com.alorma.github.sdk.utils.GitskariosSettings;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.ui.adapter.repos.ReposAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.Collection;
 import java.util.List;
 
-import retrofit.RetrofitError;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 17/07/2014.
  */
-public abstract class BaseReposListFragment extends PaginatedListFragment<List<Repo>, ReposAdapter> implements SharedPreferences.OnSharedPreferenceChangeListener {
+public abstract class BaseReposListFragment extends LoadingListFragment<ReposAdapter>
+        implements SharedPreferences.OnSharedPreferenceChangeListener, Observer<Pair<List<Repo>, Integer>> {
 
     private GitskariosSettings settings;
 
     @Override
-    protected void onResponse(List<Repo> repos, boolean refreshing) {
-        if (repos.size() > 0) {
-            hideEmpty();
-            if (getAdapter() != null) {
-                getAdapter().addAll(repos);
-            } else {
-                setUpList(repos);
-            }
-        } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
-        }
+    public void onCompleted() {
+        stopRefresh();
     }
 
     @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
-        if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            if (error != null && error.getResponse() != null) {
-                setEmpty(true, error.getResponse().getStatus());
+    public void onError(Throwable e) {
+        e.printStackTrace();
+        Snackbar.make(recyclerView, R.string.error_loading_repos, Snackbar.LENGTH_SHORT).show();
+        stopRefresh();
+    }
+
+    @Override
+    public void onNext(Pair<List<Repo>, Integer> listIntegerPair) {
+        setPage(listIntegerPair.second);
+        List<Repo> repos = listIntegerPair.first;
+
+        if (repos.size() > 0) {
+            hideEmpty();
+            if (refreshing || getAdapter() == null) {
+                setUpList(repos);
+            } else {
+                getAdapter().addAll(repos);
             }
+        } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
 
@@ -66,6 +81,11 @@ public abstract class BaseReposListFragment extends PaginatedListFragment<List<R
         if (getAdapter() != null) {
             getAdapter().clear();
         }
+    }
+
+    protected void setAction(GithubListClient<List<Repo>> reposClient) {
+        startRefresh();
+        reposClient.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(this);
     }
 
     @Override

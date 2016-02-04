@@ -13,7 +13,6 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,7 +104,6 @@ public class EmojiBitmapLoader {
             Thread thread = new Thread(runnable);
             thread.start();
         }
-
     }
 
     private void downloadBitmap(final String key, String url, final int size) {
@@ -138,7 +136,6 @@ public class EmojiBitmapLoader {
                 if (clearMap.size() == 0) {
                     addIcons();
                 }
-
             }
 
             @Override
@@ -174,5 +171,4 @@ public class EmojiBitmapLoader {
             }
         });
     }
-
 }

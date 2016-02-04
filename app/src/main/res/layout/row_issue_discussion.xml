@@ -7,16 +7,16 @@
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/gapMedium"
         android:layout_margin="@dimen/gapMedium"
-        android:layout_marginTop="@dimen/gapSmall"
         android:layout_marginBottom="@dimen/gapSmall"
-        android:orientation="vertical">
+        android:layout_marginTop="@dimen/gapSmall"
+        android:orientation="vertical"
+        android:padding="@dimen/gapMedium">
 
         <LinearLayout
+            android:id="@+id/webContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/webContainer"
             android:orientation="vertical" />
 
         <LinearLayout
@@ -25,18 +25,18 @@
             android:orientation="horizontal">
 
             <ImageView
+                android:id="@id/avatarAuthor"
                 android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:id="@id/avatarAuthor" />
+                android:layout_height="24dp" />
 
             <TextView
+                android:id="@+id/textAuthor"
                 android:layout_width="wrap_content"
                 android:layout_height="24dp"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:id="@+id/textAuthor"
-                android:gravity="center_vertical"
                 android:layout_marginLeft="@dimen/gapMedium"
-                android:layout_marginStart="@dimen/gapMedium"/>
+                android:layout_marginStart="@dimen/gapMedium"
+                android:gravity="center_vertical"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

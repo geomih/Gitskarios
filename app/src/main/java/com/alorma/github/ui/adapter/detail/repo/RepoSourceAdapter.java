@@ -1,7 +1,6 @@
 package com.alorma.github.ui.adapter.detail.repo;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Content;
@@ -26,9 +24,11 @@ import com.mikepenz.octicons_typeface_library.Octicons;
 public class RepoSourceAdapter extends RecyclerArrayAdapter<Content, RepoSourceAdapter.ViewHolder> {
 
     private SourceAdapterListener sourceAdapterListener;
+    private Context context;
 
     public RepoSourceAdapter(Context context, LayoutInflater inflater) {
         super(inflater);
+        this.context = context;
     }
 
     @Override
@@ -43,17 +43,27 @@ public class RepoSourceAdapter extends RecyclerArrayAdapter<Content, RepoSourceA
         IconicsDrawable iconDrawable = null;
         if (ContentType.dir.equals(content.type)) {
             iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_file_directory);
-        } else if (ContentType.submodule.equals(content.type)) {
+        } else if (ContentType.symlink.equals(content.type)) {
             iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_file_symlink_directory);
         } else if (ContentType.file.equals(content.type)) {
             iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_file_text);
         }
 
         if (iconDrawable != null) {
-            iconDrawable.color(AttributesUtils.getPrimaryLightColor(holder.itemView.getContext()));
+            iconDrawable.color(AttributesUtils.getAccentColor(context));
 
             holder.image.setImageDrawable(iconDrawable);
         }
+    }
+
+    public void setSourceAdapterListener(SourceAdapterListener sourceAdapterListener) {
+        this.sourceAdapterListener = sourceAdapterListener;
+    }
+
+    public interface SourceAdapterListener {
+        void onContentClick(Content content);
+
+        void onContentMenuAction(Content content, MenuItem menuItem);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements PopupMenu.OnMenuItemClickListener {
@@ -94,14 +104,5 @@ public class RepoSourceAdapter extends RecyclerArrayAdapter<Content, RepoSourceA
             }
             return false;
         }
-    }
-
-    public void setSourceAdapterListener(SourceAdapterListener sourceAdapterListener) {
-        this.sourceAdapterListener = sourceAdapterListener;
-    }
-
-    public interface SourceAdapterListener {
-        void onContentClick(Content content);
-        void onContentMenuAction(Content content, MenuItem menuItem);
     }
 }

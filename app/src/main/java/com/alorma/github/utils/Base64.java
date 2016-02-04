@@ -99,8 +99,7 @@ class Base64 {
      * @param destination the array to hold the conversion
      * @param destOffset  the index where output will be put
      */
-    private static void encode3to4(byte[] source, int srcOffset,
-                                   int numSigBytes, byte[] destination, int destOffset) {
+    private static void encode3to4(byte[] source, int srcOffset, int numSigBytes, byte[] destination, int destOffset) {
         // We have to shift left 24 in order to flush out the 1's that appear
         // when Java treats a value as negative that is cast from a byte.
 
@@ -200,21 +199,19 @@ class Base64 {
      * @param destOffset  the index where output will be put
      * @return the number of decoded bytes converted
      */
-    private static int decode4to3(byte[] source, int srcOffset,
-                                  byte[] destination, int destOffset) {
+    private static int decode4to3(byte[] source, int srcOffset, byte[] destination, int destOffset) {
         // Example: Dk==
         if (source[srcOffset + 2] == EQUALS_SIGN) {
-            int outBuff = ((DEC[source[srcOffset]] & 0xFF) << 18)
-                    | ((DEC[source[srcOffset + 1]] & 0xFF) << 12);
+            int outBuff = ((DEC[source[srcOffset]] & 0xFF) << 18) | ((DEC[source[srcOffset + 1]] & 0xFF) << 12);
             destination[destOffset] = (byte) (outBuff >>> 16);
             return 1;
         }
 
         // Example: DkL=
         else if (source[srcOffset + 3] == EQUALS_SIGN) {
-            int outBuff = ((DEC[source[srcOffset]] & 0xFF) << 18)
-                    | ((DEC[source[srcOffset + 1]] & 0xFF) << 12)
-                    | ((DEC[source[srcOffset + 2]] & 0xFF) << 6);
+            int outBuff =
+                    ((DEC[source[srcOffset]] & 0xFF) << 18) | ((DEC[source[srcOffset + 1]] & 0xFF) << 12) | ((DEC[source[srcOffset + 2]] & 0xFF)
+                            << 6);
             destination[destOffset] = (byte) (outBuff >>> 16);
             destination[destOffset + 1] = (byte) (outBuff >>> 8);
             return 2;
@@ -262,18 +259,14 @@ class Base64 {
                     b4Posn = 0;
 
                     // If that was the equals sign, break out of 'for' loop
-                    if (sbiCrop == EQUALS_SIGN)
-                        break;
+                    if (sbiCrop == EQUALS_SIGN) break;
                 }
-
-            } else if (sbiDecode != WHITE_SPACE_DEC)
-                throw new IllegalArgumentException(MessageFormat.format(
-                        "Bad Base64 input character at {0} : {1} (decimal)", i,
-                        source[i] & 0xff));
+            } else if (sbiDecode != WHITE_SPACE_DEC) {
+                throw new IllegalArgumentException(MessageFormat.format("Bad Base64 input character at {0} : {1} (decimal)", i, source[i] & 0xff));
+            }
         }
 
-        if (outBuff.length == outBuffPosn)
-            return outBuff;
+        if (outBuff.length == outBuffPosn) return outBuff;
 
         byte[] out = new byte[outBuffPosn];
         System.arraycopy(outBuff, 0, out, 0, outBuffPosn);

@@ -21,12 +21,6 @@ import com.alorma.github.ui.adapter.commit.CommitsAdapter;
 import com.alorma.github.ui.fragment.base.LoadingListFragment;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
-import org.joda.time.DateTime;
-import org.joda.time.Days;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,7 +65,7 @@ public class CompareFilesListFragment extends LoadingListFragment<CommitFilesAda
 
     @Override
     protected void loadArguments() {
-        repoInfo = getArguments().getParcelable(REPO_INFO);
+        repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
     }
 
     @Override

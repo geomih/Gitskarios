@@ -29,8 +29,8 @@ import java.util.List;
 public class GistDetailFilesAdapter extends RecyclerView.Adapter<GistDetailFilesAdapter.ViewHolder> {
 
     private final IconicsDrawable noPreviewDrawable;
-    private List<GistFile> gistFileList;
     boolean isInEditMode = false;
+    private List<GistFile> gistFileList;
     private GistFilesAdapterListener gistFilesAdapterListener;
 
     public GistDetailFilesAdapter(Context context) {
@@ -117,6 +117,10 @@ public class GistDetailFilesAdapter extends RecyclerView.Adapter<GistDetailFiles
         this.gistFilesAdapterListener = gistFilesAdapterListener;
     }
 
+    public interface GistFilesAdapterListener {
+        void onGistFilesSelected(int position, GistFile file);
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder implements Toolbar.OnMenuItemClickListener {
         public final TextView textFileName;
         public final TextView textContent;
@@ -162,13 +166,10 @@ public class GistDetailFilesAdapter extends RecyclerView.Adapter<GistDetailFiles
                 intent.putExtra(Intent.EXTRA_TEXT, gistFile.content);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_FROM_BACKGROUND);
-                textFileName.getContext().startActivity(Intent.createChooser(intent, textFileName.getResources().getString(R.string.send_file_to) + gistFile.filename));
+                textFileName.getContext()
+                        .startActivity(Intent.createChooser(intent, textFileName.getResources().getString(R.string.send_file_to) + gistFile.filename));
             }
             return false;
         }
-    }
-
-    public interface GistFilesAdapterListener {
-        void onGistFilesSelected(int position, GistFile file);
     }
 }

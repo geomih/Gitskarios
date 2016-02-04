@@ -24,21 +24,20 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.alorma.github.R;
+import com.alorma.github.utils.AttributesUtils;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 /**
  * Created by Bernat on 05/08/2014.
  */
-public abstract class SecondaryLoadingListFragment<T> extends Fragment implements SwipeRefreshLayout.OnRefreshListener,
-        AbsListView.OnScrollListener
-        ,View.OnClickListener
-        , AdapterView.OnItemClickListener {
+public abstract class SecondaryLoadingListFragment<T> extends Fragment
+        implements SwipeRefreshLayout.OnRefreshListener, AbsListView.OnScrollListener, View.OnClickListener, AdapterView.OnItemClickListener {
 
-    private SwipeRefreshLayout swipe;
     protected TextView emptyText;
     protected ImageView emptyIcon;
     protected View emptyLy;
+    private SwipeRefreshLayout swipe;
     private FloatingActionButton fab;
     private ValueAnimator animator;
     private boolean fabVisible;
@@ -152,7 +151,7 @@ public abstract class SecondaryLoadingListFragment<T> extends Fragment implement
             if (emptyText != null && emptyIcon != null) {
                 if (getNoDataIcon() != null && getNoDataText() > 0) {
                     IconicsDrawable iconDrawable = new IconicsDrawable(getActivity(), getNoDataIcon());
-                    iconDrawable.colorRes(R.color.gray_github_medium);
+                    iconDrawable.color(AttributesUtils.getIconsColor(getActivity()));
                     emptyIcon.setImageDrawable(iconDrawable);
 
                     emptyText.setText(getNoDataText());
@@ -192,15 +191,15 @@ public abstract class SecondaryLoadingListFragment<T> extends Fragment implement
         return Octicons.Icon.oct_squirrel;
     }
 
+    public ArrayAdapter<T> getListAdapter() {
+        return this.listAdapter;
+    }
+
     public void setListAdapter(ArrayAdapter<T> adapter) {
         this.listAdapter = adapter;
         if (listView != null) {
             listView.setAdapter(adapter);
         }
-    }
-
-    public ArrayAdapter<T> getListAdapter() {
-        return this.listAdapter;
     }
 
     @Override

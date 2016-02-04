@@ -7,17 +7,24 @@ import android.view.LayoutInflater;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Organization;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.sdk.services.orgs.GetOrgsClient;
 import com.alorma.github.ui.adapter.orgs.OrganizationsAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
 import java.util.List;
 
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by Bernat on 13/07/2014.
  */
-public class OrganizationsFragment extends PaginatedListFragment<List<Organization>, OrganizationsAdapter> {
+public class OrganizationsFragment extends LoadingListFragment<OrganizationsAdapter> implements Observer<List<Organization>> {
     private String username;
 
     public static OrganizationsFragment newInstance() {
@@ -38,43 +45,61 @@ public class OrganizationsFragment extends PaginatedListFragment<List<Organizati
     @Override
     protected void executeRequest() {
         super.executeRequest();
-        GetOrgsClient client = new GetOrgsClient(getActivity(), username);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new GetOrgsClient(username));
     }
 
     @Override
     protected void executePaginatedRequest(int page) {
         super.executePaginatedRequest(page);
-        GetOrgsClient client = new GetOrgsClient(getActivity(), username, page);
-        client.setOnResultCallback(this);
-        client.execute();
+        setAction(new GetOrgsClient(username, page));
+    }
+
+    private void setAction(GithubListClient<List<Organization>> getOrgsClient) {
+        startRefresh();
+        getOrgsClient.observable().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Func1<Pair<List<Organization>, Integer>, List<Organization>>() {
+                    @Override
+                    public List<Organization> call(Pair<List<Organization>, Integer> listIntegerPair) {
+                        setPage(listIntegerPair.second);
+                        return listIntegerPair.first;
+                    }
+                })
+                .subscribe(this);
     }
 
     @Override
-    protected void onResponse(List<Organization> organizations, boolean refreshing) {
+    public void onCompleted() {
+        stopRefresh();
+    }
+
+    @Override
+    public void onError(Throwable e) {
+
+    }
+
+    @Override
+    public void onNext(List<Organization> organizations) {
         if (organizations.size() > 0) {
-            if (getAdapter() != null) {
-                getAdapter().addAll(organizations);
-            } else {
+            hideEmpty();
+            if (refreshing || getAdapter() == null) {
                 OrganizationsAdapter adapter = new OrganizationsAdapter(LayoutInflater.from(getActivity()));
                 adapter.addAll(organizations);
                 setAdapter(adapter);
+            } else {
+                getAdapter().addAll(organizations);
             }
         } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
-
 
     @Override
     protected RecyclerView.LayoutManager getLayoutManager() {
         return new GridLayoutManager(getActivity(), getResources().getInteger(R.integer.grid_layout_columns));
-    }
-
-    @Override
-    protected RecyclerView.ItemDecoration getItemDecoration() {
-        return null;
     }
 
     @Override
@@ -93,15 +118,5 @@ public class OrganizationsFragment extends PaginatedListFragment<List<Organizati
     protected int getNoDataText() {
         return R.string.no_organizations;
     }
-
-/*    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
-
-        Organization item = getAdapter().getItem(position);
-
-        Intent intent = OrganizationActivity.newInstance(getActivity(), item.login);
-        startActivity(intent);
-    }*/
 }
 

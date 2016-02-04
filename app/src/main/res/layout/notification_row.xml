@@ -22,12 +22,12 @@
 
     <ImageView
         android:id="@+id/overflow"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="false"
         android:focusableInTouchMode="false"

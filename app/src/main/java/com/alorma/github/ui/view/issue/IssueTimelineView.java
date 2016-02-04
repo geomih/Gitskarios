@@ -4,18 +4,17 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.text.Html;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.issue.IssueStoryDetail;
 import com.alorma.github.sdk.bean.issue.IssueStoryEvent;
-import com.alorma.github.sdk.bean.issue.PullRequestStoryCommitsList;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.alorma.github.utils.TimeUtils;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -27,7 +26,7 @@ public class IssueTimelineView extends LinearLayout {
 
     private TextView textView;
     private TextView userText;
-    private ImageView profileIcon;
+    private UserAvatarView profileIcon;
     private TextView createdAt;
 
     public IssueTimelineView(Context context) {
@@ -56,7 +55,7 @@ public class IssueTimelineView extends LinearLayout {
         textView = (TextView) findViewById(R.id.text);
 
         userText = (TextView) findViewById(R.id.userLogin);
-        profileIcon = (ImageView) findViewById(R.id.profileIcon);
+        profileIcon = (UserAvatarView) findViewById(R.id.profileIcon);
         createdAt = (TextView) findViewById(R.id.createdAt);
     }
 
@@ -69,7 +68,6 @@ public class IssueTimelineView extends LinearLayout {
         if (eventType.equals("closed") || eventType.equals("reopened")) {
             String text = issueEvent.event.actor.login + " " + eventType;
             textView.setText(text);
-
         } else if (eventType.equals("assigned") || eventType.equals("unassigned")) {
             String text = null;
             String user = "<b>" + issueEvent.event.assignee.login + "</b>";
@@ -95,7 +93,15 @@ public class IssueTimelineView extends LinearLayout {
         } else if (eventType.equals("merged") || eventType.equals("referenced")) {
             String text = null;
             String commitId = issueEvent.event.commit_id;
-            String milestone = "<b>" + commitId.substring(0, 8) + "</b>";
+
+            String commitContent;
+            if (!TextUtils.isEmpty(commitId)) {
+                commitContent = commitId.substring(0, 8);
+            } else {
+                commitContent = "********";
+            }
+
+            String milestone = "<b>" + commitContent + "</b>";
             if (eventType.equals("merged")) {
                 text = getResources().getString(R.string.issue_merged, milestone);
             } else if (eventType.equals("referenced")) {
@@ -113,7 +119,7 @@ public class IssueTimelineView extends LinearLayout {
 
     private void applyGenericIssueStory(IssueStoryDetail storyEvent) {
         userText.setText(storyEvent.user().login);
-        ImageLoader.getInstance().displayImage(storyEvent.user().avatar_url, profileIcon);
+        profileIcon.setUser(storyEvent.user());
         setTime(storyEvent.createdAt());
     }
 
@@ -123,11 +129,4 @@ public class IssueTimelineView extends LinearLayout {
         createdAt.setText(date);
     }
 
-    public void setPullRequestCommitData(PullRequestStoryCommitsList issueStoryDetail) {
-        applyGenericIssueStory(issueStoryDetail);
-        String date = createdAt.getText().toString();
-        date = getContext().getResources().getString(R.string.pushed) + " " + date;
-        createdAt.setText(date);
-        textView.setVisibility(View.GONE);
-    }
 }

@@ -4,9 +4,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
@@ -37,6 +35,10 @@ public class LanguagesAdapter extends RecyclerArrayAdapter<String, LanguagesAdap
         this.languageSelectedListener = languageSelectedListener;
     }
 
+    public interface LanguageSelectedListener {
+        void onLanguageSelected(String language);
+    }
+
     public class Holder extends RecyclerView.ViewHolder {
         private final CompoundButton text;
 
@@ -53,9 +55,5 @@ public class LanguagesAdapter extends RecyclerArrayAdapter<String, LanguagesAdap
                 }
             });
         }
-    }
-
-    public interface LanguageSelectedListener {
-        void onLanguageSelected(String language);
     }
 }

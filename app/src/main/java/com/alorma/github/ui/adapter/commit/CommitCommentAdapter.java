@@ -5,20 +5,16 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.CommitComment;
 import com.alorma.github.sdk.bean.info.RepoInfo;
 import com.alorma.github.ui.adapter.base.RecyclerArrayAdapter;
-import com.alorma.github.utils.AttributesUtils;
+import com.alorma.github.ui.view.UserAvatarView;
 import com.gh4a.utils.UiUtils;
 import com.github.mobile.util.HtmlUtils;
 import com.github.mobile.util.HttpImageGetter;
-import com.mikepenz.iconics.IconicsDrawable;
-import com.mikepenz.octicons_typeface_library.Octicons;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 /**
  * Created by Bernat on 23/06/2015.
@@ -43,15 +39,7 @@ public class CommitCommentAdapter extends RecyclerArrayAdapter<CommitComment, Co
 
             holder.textAuthor.setText(commitComment.user.login);
 
-            if (commitComment.user.avatar_url != null) {
-                ImageLoader.getInstance().displayImage(commitComment.user.avatar_url, holder.imageAuthor);
-            } else {
-                IconicsDrawable iconDrawable = new IconicsDrawable(holder.itemView.getContext(), Octicons.Icon.oct_octoface);
-                iconDrawable.color(AttributesUtils.getSecondaryTextColor(holder.itemView.getContext()));
-                iconDrawable.sizeDp(36);
-                iconDrawable.setAlpha(128);
-                holder.imageAuthor.setImageDrawable(iconDrawable);
-            }
+            holder.imageAuthor.setUser(commitComment.user);
         }
 
         if (commitComment.body_html != null) {
@@ -68,14 +56,14 @@ public class CommitCommentAdapter extends RecyclerArrayAdapter<CommitComment, Co
     public class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView textContent;
         private final TextView textAuthor;
-        private final ImageView imageAuthor;
+        private final UserAvatarView imageAuthor;
         private final Toolbar toolbar;
 
         public ViewHolder(View itemView) {
             super(itemView);
             textContent = (TextView) itemView.findViewById(R.id.textContent);
             textAuthor = (TextView) itemView.findViewById(R.id.textAuthor);
-            imageAuthor = (ImageView) itemView.findViewById(R.id.avatarAuthor);
+            imageAuthor = (UserAvatarView) itemView.findViewById(R.id.avatarAuthor);
             toolbar = (Toolbar) itemView.findViewById(R.id.toolbar);
         }
     }

@@ -20,14 +20,15 @@
             android:minHeight="?actionBarSize"
             app:contentInsetStart="@dimen/second_keyline">
 
-            <EditText android:id="@+id/searchView"
+            <EditText
+                android:id="@+id/searchView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
                 android:hint="@string/search"
+                android:imeActionLabel="@string/search"
                 android:maxLines="1"
-                android:singleLine="true"
-                android:imeActionLabel="@string/search"/>
+                android:singleLine="true" />
 
         </android.support.v7.widget.Toolbar>
 

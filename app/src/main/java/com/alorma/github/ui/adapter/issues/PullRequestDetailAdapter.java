@@ -5,8 +5,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.alorma.github.R;
 import com.alorma.github.sdk.bean.dto.response.Permissions;
@@ -15,20 +13,12 @@ import com.alorma.github.sdk.bean.issue.IssueStoryComment;
 import com.alorma.github.sdk.bean.issue.IssueStoryDetail;
 import com.alorma.github.sdk.bean.issue.IssueStoryEvent;
 import com.alorma.github.sdk.bean.issue.IssueStoryLabelList;
-import com.alorma.github.sdk.bean.issue.IssueStoryReviewComment;
 import com.alorma.github.sdk.bean.issue.IssueStoryUnlabelList;
 import com.alorma.github.sdk.bean.issue.PullRequestStory;
-import com.alorma.github.sdk.bean.issue.PullRequestStoryCommit;
-import com.alorma.github.sdk.bean.issue.PullRequestStoryCommitsList;
-import com.alorma.github.ui.activity.PullRequestDetailActivity;
 import com.alorma.github.ui.listeners.IssueDetailRequestListener;
 import com.alorma.github.ui.view.issue.IssueCommentView;
-import com.alorma.github.ui.view.issue.IssueDetailView;
 import com.alorma.github.ui.view.issue.IssueStoryLabelDetailView;
-import com.alorma.github.ui.view.issue.IssueTimelineSecondaryView;
 import com.alorma.github.ui.view.issue.IssueTimelineView;
-import com.alorma.github.ui.view.issue.ReviewCommentView;
-import com.alorma.github.ui.view.pullrequest.PullRequestCommitsView;
 import com.alorma.github.ui.view.pullrequest.PullRequestDetailView;
 
 /**
@@ -51,8 +41,8 @@ public class PullRequestDetailAdapter extends RecyclerView.Adapter<PullRequestDe
     private PullRequestDetailView.PullRequestActionsListener pullRequestActionsListener;
     private IssueDetailRequestListener issueDetailRequestListener;
 
-    public PullRequestDetailAdapter(Context context, LayoutInflater inflater, PullRequestStory pullRequestStory, RepoInfo repoInfo, Permissions permissions
-            , PullRequestDetailView.PullRequestActionsListener pullRequestActionsListener) {
+    public PullRequestDetailAdapter(Context context, LayoutInflater inflater, PullRequestStory pullRequestStory, RepoInfo repoInfo,
+                                    Permissions permissions, PullRequestDetailView.PullRequestActionsListener pullRequestActionsListener) {
         this.context = context;
         this.pullRequestStory = pullRequestStory;
         this.repoInfo = repoInfo;
@@ -87,10 +77,8 @@ public class PullRequestDetailAdapter extends RecyclerView.Adapter<PullRequestDe
         int viewType = getItemViewType(position);
 
         if (position == 0) {
-            ((PullRequestHolder) holder).pullRequestDetailView.setPullRequest(repoInfo
-                    , pullRequestStory.pullRequest
-                    , pullRequestStory.statusResponse
-                    , permissions);
+            ((PullRequestHolder) holder).pullRequestDetailView.setPullRequest(repoInfo, pullRequestStory.pullRequest,
+                    pullRequestStory.statusResponse, permissions);
             ((PullRequestHolder) holder).pullRequestDetailView.setIssueDetailRequestListener(issueDetailRequestListener);
             ((PullRequestHolder) holder).pullRequestDetailView.setPullRequestActionsListener(pullRequestActionsListener);
         } else {
@@ -173,6 +161,5 @@ public class PullRequestDetailAdapter extends RecyclerView.Adapter<PullRequestDe
         public Holder(View itemView) {
             super(itemView);
         }
-
     }
 }

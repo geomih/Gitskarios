@@ -15,15 +15,19 @@
  */
 package com.github.mobile.util;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
 import android.graphics.Point;
 import android.util.Log;
 
+import com.bumptech.glide.Glide;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Image utilities
@@ -35,8 +39,6 @@ public class ImageUtils {
     /**
      * Get a bitmap from the image path
      *
-     * @param imagePath
-     * @param sampleSize
      * @return bitmap or null if read fails
      */
     public static Bitmap getBitmap(final String imagePath, int sampleSize) {
@@ -47,25 +49,24 @@ public class ImageUtils {
         RandomAccessFile file = null;
         try {
             file = new RandomAccessFile(imagePath, "r");
-            return BitmapFactory.decodeFileDescriptor(file.getFD(), null,
-                    options);
+            return BitmapFactory.decodeFileDescriptor(file.getFD(), null, options);
         } catch (IOException e) {
             Log.d(TAG, e.getMessage(), e);
             return null;
         } finally {
-            if (file != null)
+            if (file != null) {
                 try {
                     file.close();
                 } catch (IOException e) {
                     Log.d(TAG, e.getMessage(), e);
                 }
+            }
         }
     }
 
     /**
      * Get size of image
      *
-     * @param imagePath
      * @return size
      */
     public static Point getSize(final String imagePath) {
@@ -81,21 +82,19 @@ public class ImageUtils {
             Log.d(TAG, e.getMessage(), e);
             return null;
         } finally {
-            if (file != null)
+            if (file != null) {
                 try {
                     file.close();
                 } catch (IOException e) {
                     Log.d(TAG, e.getMessage(), e);
                 }
+            }
         }
     }
 
     /**
      * Get bitmap with maximum height or width
      *
-     * @param imagePath
-     * @param width
-     * @param height
      * @return image
      */
     public static Bitmap getBitmap(final String imagePath, int width, int height) {
@@ -120,9 +119,18 @@ public class ImageUtils {
     /**
      * Get bitmap with maximum height or width
      *
-     * @param image
-     * @param width
-     * @param height
+     * @return image
+     */
+    public static Bitmap getBitmap(Context context, final String imagePath, int width, int height) throws ExecutionException, InterruptedException {
+        return Glide.with(context)
+                .load(imagePath)
+                .asBitmap()
+                .into(width, height).get();
+    }
+
+    /**
+     * Get bitmap with maximum height or width
+     *
      * @return image
      */
     public static Bitmap getBitmap(final File image, int width, int height) {

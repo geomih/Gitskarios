@@ -33,12 +33,9 @@ import java.util.UUID;
 public class DonateFragment extends BaseFragment {
 
     private static final String SKU_BASE_DONATE = "com.alorma.github.donate";
-
-    private String purchaseId;
-
-    private IInAppBillingService mService;
     public ArrayList<DonateItem> skuList;
-
+    private String purchaseId;
+    private IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
 
         @Override
@@ -47,8 +44,7 @@ public class DonateFragment extends BaseFragment {
         }
 
         @Override
-        public void onServiceConnected(ComponentName name,
-                                       IBinder service) {
+        public void onServiceConnected(ComponentName name, IBinder service) {
             mService = IInAppBillingService.Stub.asInterface(service);
         }
     };
@@ -74,8 +70,7 @@ public class DonateFragment extends BaseFragment {
     }
 
     public void launchDonate() {
-        new MaterialDialog.Builder(getActivity())
-                .title(R.string.support_development)
+        new MaterialDialog.Builder(getActivity()).title(R.string.support_development)
                 .adapter(new DonateItemsAdapter(getActivity(), skuList), new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog materialDialog, View view, int i, CharSequence charSequence) {
@@ -86,24 +81,15 @@ public class DonateFragment extends BaseFragment {
                 .show();
     }
 
-    private class DonateItemsAdapter extends ArrayAdapter<DonateItem> {
-
-        public DonateItemsAdapter(Context context, List<DonateItem> objects) {
-            super(context, android.R.layout.simple_list_item_1, objects);
-        }
-    }
-
     private void buy(String sku) {
         try {
             if (mService != null) {
                 purchaseId = UUID.randomUUID().toString();
-                Bundle buyIntentBundle = mService.getBuyIntent(3, getActivity().getPackageName(),
-                        sku, "inapp", purchaseId);
+                Bundle buyIntentBundle = mService.getBuyIntent(3, getActivity().getPackageName(), sku, "inapp", purchaseId);
                 if (buyIntentBundle != null) {
                     PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                     if (pendingIntent != null) {
-                        getActivity().startIntentSenderForResult(pendingIntent.getIntentSender(),
-                                1001, new Intent(), 0, 0, 0);
+                        getActivity().startIntentSenderForResult(pendingIntent.getIntentSender(), 1001, new Intent(), 0, 0, 0);
                     }
                 }
             }
@@ -147,5 +133,12 @@ public class DonateFragment extends BaseFragment {
 
     public boolean enabled() {
         return true;
+    }
+
+    private class DonateItemsAdapter extends ArrayAdapter<DonateItem> {
+
+        public DonateItemsAdapter(Context context, List<DonateItem> objects) {
+            super(context, android.R.layout.simple_list_item_1, objects);
+        }
     }
 }

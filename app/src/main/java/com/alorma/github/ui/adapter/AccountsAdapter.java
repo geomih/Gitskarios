@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.alorma.github.AccountsHelper;
 import com.alorma.github.R;
-import com.alorma.github.sdk.login.AccountsHelper;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 /**
@@ -18,8 +18,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
  */
 public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.Holder> {
 
-    private Context context;
     private final LayoutInflater mInflater;
+    private Context context;
     private Account[] accounts;
 
     public AccountsAdapter(Context context, Account[] accounts) {

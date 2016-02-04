@@ -24,31 +24,36 @@ import com.alorma.github.sdk.bean.dto.response.IssueState;
 import com.alorma.github.sdk.bean.dto.response.Permissions;
 import com.alorma.github.sdk.bean.info.IssueInfo;
 import com.alorma.github.sdk.bean.info.RepoInfo;
+import com.alorma.github.sdk.services.client.GithubListClient;
 import com.alorma.github.sdk.services.issues.GetIssuesClient;
 import com.alorma.github.sdk.services.search.IssuesSearchClient;
 import com.alorma.github.ui.activity.IssueDetailActivity;
 import com.alorma.github.ui.activity.NewIssueActivity;
 import com.alorma.github.ui.activity.SearchIssuesActivity;
 import com.alorma.github.ui.adapter.issues.IssuesAdapter;
-import com.alorma.github.ui.fragment.base.PaginatedListFragment;
+import com.alorma.github.ui.fragment.base.LoadingListFragment;
 import com.alorma.github.ui.fragment.detail.repo.BackManager;
 import com.alorma.github.ui.fragment.detail.repo.PermissionsManager;
 import com.alorma.github.ui.listeners.TitleProvider;
+import com.alorma.gitskarios.core.Pair;
 import com.mikepenz.iconics.typeface.IIcon;
 import com.mikepenz.octicons_typeface_library.Octicons;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Bernat on 22/08/2014.
  */
-public class IssuesListFragment extends PaginatedListFragment<List<Issue>, IssuesAdapter> implements View.OnClickListener, TitleProvider, PermissionsManager,
-        BackManager, IssuesAdapter.IssuesAdapterListener {
+public class IssuesListFragment extends LoadingListFragment<IssuesAdapter>
+        implements View.OnClickListener, TitleProvider, PermissionsManager, BackManager, IssuesAdapter.IssuesAdapterListener {
 
     private static final String REPO_INFO = "REPO_INFO";
     private static final String FROM_SEARCH = "FROM_SEARCH";
@@ -79,7 +84,6 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
         setHasOptionsMenu(!fromSearch);
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.issues_list_fragment, null, false);
@@ -102,6 +106,7 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
                 if (currentFilter != position) {
                     currentFilter = position;
 
+                    clear();
                     onRefresh();
                 }
             }
@@ -142,31 +147,30 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
     @Override
     protected void loadArguments() {
         if (getArguments() != null) {
-            repoInfo = getArguments().getParcelable(REPO_INFO);
+            repoInfo = (RepoInfo) getArguments().getParcelable(REPO_INFO);
             fromSearch = getArguments().getBoolean(FROM_SEARCH, false);
         }
     }
-
 
     protected void executeRequest() {
         super.executeRequest();
         if (repoInfo != null) {
             if (fromSearch && searchClientRequest != null && searchClientRequest.request() != null) {
                 if (currentFilter == 0 || currentFilter == 1) {
-                    IssueInfo issueInfo = new IssueInfo(repoInfo);
+                    IssueInfo issueInfo = new IssueInfo();
+                    issueInfo.repoInfo = repoInfo;
                     if (currentFilter == 0) {
                         issueInfo.state = IssueState.open;
                     } else if (currentFilter == 1) {
                         issueInfo.state = IssueState.closed;
                     }
 
-                    IssuesSearchClient searchClient = new IssuesSearchClient(getActivity(), searchClientRequest.request());
-                    searchClient.setOnResultCallback(this);
-                    searchClient.execute();
+                    setAction(new IssuesSearchClient(searchClientRequest.request()));
                 }
             } else {
                 if (currentFilter == 0 || currentFilter == 1) {
-                    IssueInfo issueInfo = new IssueInfo(repoInfo);
+                    IssueInfo issueInfo = new IssueInfo();
+                    issueInfo.repoInfo = repoInfo;
                     if (currentFilter == 0) {
                         issueInfo.state = IssueState.open;
                     } else if (currentFilter == 1) {
@@ -174,12 +178,47 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
                     }
                     HashMap<String, String> map = new HashMap<>();
                     map.put("state", issueInfo.state.name());
-                    GetIssuesClient issuesClient = new GetIssuesClient(getActivity(), issueInfo, map);
-                    issuesClient.setOnResultCallback(this);
-                    issuesClient.execute();
+
+                    setAction(new GetIssuesClient(issueInfo, map));
                 }
             }
         }
+    }
+
+    private void setAction(GithubListClient<List<Issue>> client) {
+        client.observable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).doOnNext(new Action1<Pair<List<Issue>, Integer>>() {
+            @Override
+            public void call(Pair<List<Issue>, Integer> listIntegerPair) {
+                setPage(listIntegerPair.second);
+            }
+        }).flatMap(new Func1<Pair<List<Issue>, Integer>, Observable<Issue>>() {
+            @Override
+            public Observable<Issue> call(Pair<List<Issue>, Integer> listIntegerPair) {
+                return Observable.from(listIntegerPair.first);
+            }
+        }).filter(new Func1<Issue, Boolean>() {
+            @Override
+            public Boolean call(Issue issue) {
+                return issue.pullRequest == null;
+            }
+        }).toList().subscribe(new Subscriber<List<Issue>>() {
+            @Override
+            public void onCompleted() {
+                stopRefresh();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                if (getAdapter() == null || getAdapter().getItemCount() == 0) {
+                    setEmpty();
+                }
+            }
+
+            @Override
+            public void onNext(List<Issue> issues) {
+                onResponse(issues);
+            }
+        });
     }
 
     @Override
@@ -189,20 +228,20 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
         if (repoInfo != null) {
             if (fromSearch && searchClientRequest != null && searchClientRequest.request() != null) {
                 if (currentFilter == 0 || currentFilter == 1) {
-                    IssueInfo issueInfo = new IssueInfo(repoInfo);
+                    IssueInfo issueInfo = new IssueInfo();
+                    issueInfo.repoInfo = repoInfo;
                     if (currentFilter == 0) {
                         issueInfo.state = IssueState.open;
                     } else if (currentFilter == 1) {
                         issueInfo.state = IssueState.closed;
                     }
 
-                    IssuesSearchClient searchClient = new IssuesSearchClient(getActivity(), searchClientRequest.request(), page);
-                    searchClient.setOnResultCallback(this);
-                    searchClient.execute();
+                    setAction(new IssuesSearchClient(searchClientRequest.request(), page));
                 }
             } else {
                 if (currentFilter == 0 || currentFilter == 1) {
-                    IssueInfo issueInfo = new IssueInfo(repoInfo);
+                    IssueInfo issueInfo = new IssueInfo();
+                    issueInfo.repoInfo = repoInfo;
                     if (currentFilter == 0) {
                         issueInfo.state = IssueState.open;
                     } else if (currentFilter == 1) {
@@ -210,21 +249,17 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
                     }
                     HashMap<String, String> map = new HashMap<>();
                     map.put("state", issueInfo.state.name());
-                    GetIssuesClient issuesClient = new GetIssuesClient(getActivity(), issueInfo, map, page);
-                    issuesClient.setOnResultCallback(this);
-                    issuesClient.execute();
+
+                    setAction(new GetIssuesClient(issueInfo, map, page));
                 }
             }
         }
     }
 
-    @Override
-    protected void onResponse(List<Issue> issues, boolean refreshing) {
-        if (issues != null && issues.size() > 0) {
-
-            issues = filterIssues(issues);
-
-            if (getAdapter() == null) {
+    protected void onResponse(List<Issue> issues) {
+        if (issues.size() > 0) {
+            hideEmpty();
+            if (refreshing || getAdapter() == null) {
                 IssuesAdapter issuesAdapter = new IssuesAdapter(LayoutInflater.from(getActivity()));
                 issuesAdapter.setIssuesAdapterListener(this);
                 issuesAdapter.addAll(issues);
@@ -233,27 +268,10 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
                 getAdapter().addAll(issues);
             }
         } else if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            setEmpty(false);
-        }
-    }
-
-    private List<Issue> filterIssues(List<Issue> issues) {
-        List<Issue> newIssues = new ArrayList<>(issues.size());
-        for (Issue issue : issues) {
-            if (issue.pullRequest == null) {
-                newIssues.add(issue);
-            }
-        }
-        return newIssues;
-    }
-
-    @Override
-    public void onFail(RetrofitError error) {
-        super.onFail(error);
-        if (getAdapter() == null || getAdapter().getItemCount() == 0) {
-            if (error != null && error.getResponse() != null) {
-                setEmpty(true, error.getResponse().getStatus());
-            }
+            setEmpty();
+        } else {
+            getAdapter().clear();
+            setEmpty();
         }
     }
 
@@ -353,7 +371,6 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
             this.repoInfo.permissions = permissions;
             checkFAB();
         }
-
     }
 
     @Override
@@ -402,11 +419,6 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
         onRefresh();
     }
 
-    public interface SearchClientRequest {
-        String request();
-
-    }
-
     @Override
     protected boolean autoStart() {
         return !fromSearch;
@@ -416,5 +428,9 @@ public class IssuesListFragment extends PaginatedListFragment<List<Issue>, Issue
     public void setRefreshing() {
         super.setRefreshing();
         startRefresh();
+    }
+
+    public interface SearchClientRequest {
+        String request();
     }
 }
